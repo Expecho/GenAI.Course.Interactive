@@ -1,0 +1,8 @@
+Next topic topic is about tools. It should cover the fact that a model has no access to current information. 
+The user should ask: what is the current date and time. Then reveal the next section in which we add a tool to the call that gets the current date and time. The explanation section should explan about training data cut-off, the fact that the llm has no direct access to actual information and that we can use tools or inject context to solve this.
+Explain that too many tools increase token usage and may confuse the model. Explain the concept of MCP servers as anoter option to add context to a model
+
+
+
+
+

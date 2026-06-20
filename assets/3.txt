@@ -1,0 +1,4 @@
+Next topic topic is about state. It should cover the fact that a model is stateless. The user should ask "what is my name", and after the response the should ask it again. The question to the user is: how do we fix this. Answer should be about storing the messages or adding memory or history. (check using llm). 
+Then show code that adds in memory state and let the user run the code and see now the llm remembers.
+The exlanation section should be that a developer needs to add chat history for meaning conversations and the dev needs to think about how and where to store that.
+Explain how this affect token count and costs for (longer) conversations

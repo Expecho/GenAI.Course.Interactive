@@ -1,0 +1,58 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Light theme (default) */
+:root {
+  color-scheme: light;
+  --bg: #f6f8fa;
+  --surface: #ffffff;
+  --surface-sunken: #f6f8fa;
+  --border: #e5e7eb;
+  --border-strong: #d1d5db;
+  --fg: #111827;
+  --fg-body: #1f2937;
+  --fg-muted: #4b5563;
+  --fg-subtle: #6b7280;
+  --chip: #eef1f4;
+  --disabled: #e5e7eb;
+  --ok: #16a34a;
+  --ok-bg: rgba(22, 163, 74, 0.12);
+  --warn: #b45309;
+  --warn-bg: rgba(217, 119, 6, 0.12);
+  --danger: #dc2626;
+  --info: #2563eb;
+}
+
+/* Dark theme */
+.dark {
+  color-scheme: dark;
+  --bg: #0d1117;
+  --surface: #161b22;
+  --surface-sunken: #010409;
+  --border: #1f2a37;
+  --border-strong: #4b5563;
+  --fg: #e6edf3;
+  --fg-body: #d1d5db;
+  --fg-muted: #9ca3af;
+  --fg-subtle: #6b7280;
+  --chip: #1f2937;
+  --disabled: #374151;
+  --ok: #4ade80;
+  --ok-bg: rgba(22, 163, 74, 0.2);
+  --warn: #fbbf24;
+  --warn-bg: rgba(245, 158, 11, 0.15);
+  --danger: #f87171;
+  --info: #60a5fa;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+}
