@@ -3,8 +3,6 @@
 An interactive, web-based workshop for learning GenAI concepts hands-on. Each topic shows
 editable TypeScript code that you run in the browser and watch the output **stream in live**.
 
-It replaces the static `AzureOpenAI.ipynb` C# notebook with a live full-stack app.
-
 ## Stack
 
 - **Next.js (App Router) + TypeScript** — single full-stack app
