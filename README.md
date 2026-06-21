@@ -44,6 +44,31 @@ The edited code runs **on the server**, so the Azure key must never be reachable
 2. Read the description, then edit the code in the Monaco editor.
 3. Press **Run** — the output panel streams the result live.
 
+## Course content
+
+The workshop starts with a short introduction, then walks through 16 hands-on topics. Most
+topics include a runnable snippet, a checkpoint question, and a follow-up experiment.
+
+| Topic | What it covers |
+| --- | --- |
+| Introduction | What the workshop is for, who it targets, and how to learn by editing and running small experiments. |
+| 1 · Calling an LLM | Your first Responses API call, the response object, and how token usage maps to cost. |
+| 2 · System & user prompts | How system prompts shape behaviour, how user prompts ask for work, and why output varies run to run. |
+| 3 · State & memory | Why models are stateless, how chat history creates memory, and why long conversations cost more. |
+| 4 · Reasoning models | How reasoning models spend hidden reasoning tokens to solve harder multi-step problems. |
+| 5 · Tools & live data | How function calling connects a frozen model to live data such as time, APIs, and external systems. |
+| 6 · MCP servers | How MCP exposes reusable tools over a standard protocol so models can discover and call them with less custom wiring. |
+| 7 · Retrieval (RAG) | How to ground answers in private or current documents using retrieval, embeddings, and injected context. |
+| 8 · Structured output | How to constrain model output with JSON schemas so applications get reliable machine-readable data. |
+| 9 · Streaming | How streaming improves perceived responsiveness by showing output as it is generated. |
+| 10 · Multimodal | How vision-capable models read images, turning them into input tokens with real cost implications. |
+| 11 · Image generation | How image models differ from text models, including their separate API, output format, and pricing model. |
+| 12 · Context windows | How input and output share one token budget, and why history, tools, and retrieved context compete for space. |
+| 13 · Skills | How reusable, on-demand instructions keep prompts focused instead of loading every capability up front. |
+| 14 · Guardrails, evals & tests | How to validate LLM features with runtime constraints, labelled eval sets, and regression tests. |
+| 15 · Agent frameworks | How agent loops work, and what frameworks add for orchestration, memory, retries, and observability. |
+| 16 · Multi-agent systems | How specialist agents can collaborate through an orchestrator, and where MCP and A2A fit in. |
+
 ## Adding a topic
 
 Topics are data-driven — no infra changes needed. Append a `Topic` entry in
