@@ -2,7 +2,7 @@
  * Topic 13 — "Guardrails, evals & tests". Two code blocks:
  *  - default (broken): ship a feature on one manual spot-check ("looks right").
  *  - fixed: a tiny eval harness — labelled cases, run each, score automatically.
- *  The feature is a sentiment classifier; the enum structured output (Topic 8)
+ *  The feature is a sentiment classifier; the enum structured output (Topic 9)
  *  doubles as an output guardrail.
  */
 export const topic13DefaultCode = `// Our feature: classify a message's sentiment. Let's eyeball ONE example.

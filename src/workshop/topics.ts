@@ -15,6 +15,7 @@ import { topic13DefaultCode, topic13EvalCode } from "./topic-13-evals";
 import { topic14DefaultCode } from "./topic-14-agents";
 import { topic15DefaultCode } from "./topic-15-multi-agent";
 import { topic16DefaultCode } from "./topic-16-skills";
+import { topic17DefaultCode, topic17CodeInterpreterCode } from "./topic-17-code-interpreter";
 
 export type Topic = {
   id: string;
@@ -389,7 +390,7 @@ const topicDefinitions: Topic[] = [
   },
   {
     id: "structured-output",
-    title: "8 · Structured output",
+    title: "9 · Structured output",
     description: [
       "## getting structured data out, reliably",
       "",
@@ -469,7 +470,7 @@ const topicDefinitions: Topic[] = [
   },
   {
     id: "multimodal",
-    title: "10 · Multimodal",
+    title: "11 · Multimodal",
     description: [
       "## models that see, not just read",
       "",
@@ -535,7 +536,7 @@ const topicDefinitions: Topic[] = [
   },
   {
     id: "rag",
-    title: "7 · Retrieval (RAG)",
+    title: "8 · Retrieval (RAG)",
     description: [
       "## grounding the model in your own data",
       "",
@@ -717,7 +718,7 @@ const topicDefinitions: Topic[] = [
   },
   {
     id: "streaming",
-    title: "9 · Streaming",
+    title: "10 · Streaming",
     description: [
       "## show the answer as it's written",
       "",
@@ -787,7 +788,7 @@ const topicDefinitions: Topic[] = [
   },
   {
     id: "mcp",
-    title: "6 · MCP servers",
+    title: "7 · MCP servers",
     description: [
       "## tools without the wiring",
       "",
@@ -878,7 +879,7 @@ const topicDefinitions: Topic[] = [
   },
   {
     id: "context-window",
-    title: "12 · Context windows",
+    title: "13 · Context windows",
     description: [
       "## the model can only hold so much at once",
       "",
@@ -898,7 +899,7 @@ const topicDefinitions: Topic[] = [
       rubric:
         "Correct if the answer identifies things that consume the shared context budget / input tokens, " +
         "leaving less room for output: e.g. the conversation history (Topic 3), the system prompt, " +
-        "retrieved/injected context or documents (RAG, Topic 7), tool definitions (Topic 5), few-shot " +
+        "retrieved/injected context or documents (RAG, Topic 8), tool definitions (Topic 5), few-shot " +
         "examples, or a long prompt/question. Naming any of history, system prompt, RAG/retrieved " +
         "context, tools, examples, or 'a big input/prompt' counts. Saying 'nothing' or only repeating " +
         "'the output' is incorrect. Be lenient about wording.",
@@ -941,7 +942,7 @@ const topicDefinitions: Topic[] = [
         "## 🧮 Everything competes for the budget",
         "",
         "This connects every earlier topic: conversation **history** (Topic 3), **retrieved documents**",
-        "(RAG, Topic 7), **tool definitions** (Topic 5), the **system prompt** (Topic 2), and examples",
+        "(RAG, Topic 8), **tool definitions** (Topic 5), the **system prompt** (Topic 2), and examples",
         "all live in the input — so the more you add, the less room is left for the answer. We forced",
         "the issue from the output side with `max_output_tokens`, but in practice it's usually a bloated",
         "*input* that crowds things out.",
@@ -955,7 +956,7 @@ const topicDefinitions: Topic[] = [
         "## 🧭 Working within it",
         "",
         "This is why long chats are **trimmed, summarised, or windowed** (Topic 3), why RAG retrieves",
-        "*few, relevant* passages instead of whole documents (Topic 7), and why you give only the tools",
+        "*few, relevant* passages instead of whole documents (Topic 8), and why you give only the tools",
         "you need (Topic 5). A bigger window helps but costs more per call (more input tokens, Topic 1) —",
         "managing the budget is part of building with LLMs.",
         "",
@@ -972,11 +973,11 @@ const topicDefinitions: Topic[] = [
   },
   {
     id: "image-generation",
-    title: "11 · Image generation",
+    title: "12 · Image generation",
     description: [
       "## models that draw, not write",
       "",
-      "So far the model has *read* images (Topic 10) and produced text. **Image-generation models** do",
+      "So far the model has *read* images (Topic 11) and produced text. **Image-generation models** do",
       "the opposite: you give a text **prompt** and they return a **picture**. Different model, different",
       "API call — `client.images.generate(...)` instead of `responses.create(...)`.",
       "",
@@ -1015,7 +1016,7 @@ const topicDefinitions: Topic[] = [
         "Generating an image is a fundamentally different task from predicting text, so it uses a",
         "**dedicated image model** (here `imageDeployment`, e.g. `gpt-image-1`) and a different endpoint:",
         "`client.images.generate(...)`. A text model like our chat deployment only ever outputs tokens — it cannot",
-        "produce pixels. \"Multimodal\" (Topic 10) was about what a model can take *in*; this is about what",
+        "produce pixels. \"Multimodal\" (Topic 11) was about what a model can take *in*; this is about what",
         "it puts *out*.",
         "",
         "## 🖼️ How the result comes back",
@@ -1049,7 +1050,7 @@ const topicDefinitions: Topic[] = [
   },
   {
     id: "evals",
-    title: "14 · Guardrails, evals & tests",
+    title: "15 · Guardrails, evals & tests",
     description: [
       "## you can't ship LLM features on vibes",
       "",
@@ -1096,7 +1097,7 @@ const topicDefinitions: Topic[] = [
       intro: [
         "An **eval** runs the feature over a labelled test set and scores it. Each case has a known",
         "correct answer; we compare the model's output and report a pass rate. The enum structured",
-        "output (Topic 8) also acts as a **guardrail** — the model can only return an allowed label.",
+        "output (Topic 9) also acts as a **guardrail** — the model can only return an allowed label.",
       ].join("\n"),
       code: topic13EvalCode,
       explanation: [
@@ -1144,7 +1145,7 @@ const topicDefinitions: Topic[] = [
   },
   {
     id: "agents",
-    title: "15 · Agent frameworks",
+    title: "16 · Agent frameworks",
     description: [
       "## letting the model drive a loop",
       "",
@@ -1201,8 +1202,8 @@ const topicDefinitions: Topic[] = [
         "- the **tool-calling loop** and tool registration/dispatch,",
         "- **memory** and conversation **state** (Topic 3),",
         "- **multi-step planning** and **multi-agent** coordination (agents calling agents),",
-        "- **retries**, error handling, timeouts, and **streaming** (Topic 9),",
-        "- **observability** — tracing every step, tool call, and token for debugging and evals (Topic 14).",
+        "- **retries**, error handling, timeouts, and **streaming** (Topic 10),",
+        "- **observability** — tracing every step, tool call, and token for debugging and evals (Topic 15).",
         "",
         "## 🛠️ The main frameworks",
         "",
@@ -1234,7 +1235,7 @@ const topicDefinitions: Topic[] = [
   },
   {
     id: "multi-agent",
-    title: "16 · Multi-agent systems",
+    title: "17 · Multi-agent systems",
     description: [
       "## a team of specialised agents",
       "",
@@ -1280,7 +1281,7 @@ const topicDefinitions: Topic[] = [
         "instructions, and tools, and let an **orchestrator** route work between them (and combine the",
         "results). Benefits: each agent's prompt and tool set stay small and reliable (Topic 5's",
         "\"don't over-tool\"), specialists are reusable, and you can test/evaluate each one on its own",
-        "(Topic 14). Common shapes: orchestrator→workers, pipelines, or agents that debate/review.",
+        "(Topic 15). Common shapes: orchestrator→workers, pipelines, or agents that debate/review.",
         "",
         "## 🔧 Agents as tools",
         "",
@@ -1291,7 +1292,7 @@ const topicDefinitions: Topic[] = [
         "",
         "## 🔌 MCP — agents/tools over a standard protocol",
         "",
-        "To share an agent or tool *beyond* your process, expose it via an **MCP server** (Topic 6).",
+        "To share an agent or tool *beyond* your process, expose it via an **MCP server** (Topic 7).",
         "Now any MCP-aware client can discover and call it over a standard protocol — no hard-wired",
         "function in your code. MCP connects an agent to **tools and data**.",
         "",
@@ -1300,7 +1301,7 @@ const topicDefinitions: Topic[] = [
         "**A2A (Agent2Agent)** is an open protocol for agents to collaborate with **each other** across",
         "different frameworks and vendors. Each agent publishes an **agent card** describing its skills;",
         "others discover it and **delegate tasks**, exchanging messages and results over HTTP — even if",
-        "one is built with LangChain and another with the Microsoft Agent Framework (Topic 15). The rule",
+        "one is built with LangChain and another with the Microsoft Agent Framework (Topic 16). The rule",
         "of thumb: **MCP connects an agent to its tools; A2A connects agents to other agents.**",
         "",
         "## 🧭 In-process vs protocols",
@@ -1317,13 +1318,13 @@ const topicDefinitions: Topic[] = [
         "- **MCP vs A2A.** For your own system, which capabilities would you expose as MCP tools, and",
         "which interactions are really agent-to-agent (A2A)?",
         "- **Failure modes.** If a specialist gives a wrong answer, how would the orchestrator notice? (How",
-        "do guardrails and evals from Topic 14 apply to each agent in the team?)",
+        "do guardrails and evals from Topic 15 apply to each agent in the team?)",
       ].join("\n"),
     },
   },
   {
     id: "skills",
-    title: "13 · Skills",
+    title: "14 · Skills",
     description: [
       "## reusable expertise, loaded on demand",
       "",
@@ -1342,7 +1343,7 @@ const topicDefinitions: Topic[] = [
         "We showed the model only short skill descriptions, then loaded just the chosen skill's full instructions. Why is that better than putting every skill's instructions in the system prompt up front?",
       rubric:
         "Correct if the answer is about not loading everything into context at once — progressive / " +
-        "on-demand loading saves the limited context budget (Topic 12), keeps the prompt small/focused " +
+        "on-demand loading saves the limited context budget (Topic 13), keeps the prompt small/focused " +
         "so the model isn't distracted or confused by irrelevant instructions, reduces token cost, and " +
         "scales to many skills. Mentioning context window/budget, tokens/cost, only loading what's " +
         "relevant, avoiding a bloated/confusing prompt, or scaling to many skills all count. Saying " +
@@ -1377,7 +1378,7 @@ const topicDefinitions: Topic[] = [
         "The key trick is **loading skills on demand**. The model first sees only lightweight metadata",
         "— each skill's name and one-line description — which costs very few tokens. It picks what's",
         "relevant, and only *then* are that skill's full instructions pulled into context. This keeps",
-        "the **context window** (Topic 12) free, cuts token cost, and avoids drowning the model in",
+        "the **context window** (Topic 13) free, cuts token cost, and avoids drowning the model in",
         "instructions it doesn't need right now — so you can have dozens of skills without bloating",
         "every call.",
         "",
@@ -1405,6 +1406,110 @@ const topicDefinitions: Topic[] = [
       ].join("\n"),
     },
   },
+  {
+    id: "code-interpreter",
+    title: "6 · Code interpreter",
+    description: [
+      "## let the model run code, not guess",
+      "",
+      "An LLM doesn't *calculate* — it predicts tokens (Topic 1), so exact maths, parsing, and",
+      "data crunching are unreliable. The **code interpreter** tool fixes this by giving the model a",
+      "real **Python sandbox**: it writes code, the platform runs it in a container, and the model",
+      "answers from the actual output.",
+      "",
+      "First, watch the model try a statistics problem on its own. Read its answer carefully — then",
+      "ask yourself whether you'd bet on it.",
+    ].join("\n"),
+    defaultCode: topic17DefaultCode,
+    question: {
+      kind: "text",
+      prompt:
+        "The model produced a tidy, confident number — but doing exact maths in its head is unreliable, and you can't easily verify it. How do we get an exact, trustworthy answer for tasks that need real computation?",
+      rubric:
+        "Correct if the answer is about letting the model write and run actual code in a sandbox / " +
+        "interpreter (e.g. a Python code-interpreter tool) — i.e. execute real code to compute the " +
+        "result deterministically and verifiably, rather than have the model predict the answer token " +
+        "by token. Mentioning a code interpreter, running/executing code, a Python sandbox, or a tool " +
+        "that does the computation all count. Generic 'use a tool / function calling' counts only if it " +
+        "conveys executing code to compute the result; merely 'ask better' or 'use a calculator in the " +
+        "prompt' without the model running code is weaker — accept a calculator/tool that actually does " +
+        "the computation. Be lenient about exact wording.",
+      keywords: [
+        "code interpreter",
+        "code",
+        "execute",
+        "run code",
+        "python",
+        "sandbox",
+        "interpreter",
+        "tool",
+        "calculate",
+        "compute",
+        "deterministic",
+        "verifiable",
+        "actually run",
+      ],
+      explanation: [
+        "Right — instead of trusting the model's mental arithmetic, we let it **write and run real",
+        "code**. Below we add the built-in `code_interpreter` tool; the model generates Python, the",
+        "platform executes it in a sandbox, and it answers from the true result. Run it and compare.",
+      ].join("\n"),
+    },
+    followUp: {
+      intro: [
+        "We attach the built-in **`code_interpreter`** tool — a hosted Python sandbox. The model",
+        "writes Python, the platform **runs it in a container**, and the model reads the real output",
+        "before answering. It all happens in a single call; we also print the Python it generated so",
+        "you can see (and check) its work.",
+      ].join("\n"),
+      code: topic17CodeInterpreterCode,
+      explanation: [
+        "## 🧮 Why the first answer couldn't be trusted",
+        "",
+        "An LLM generates text by predicting the next token (Topic 1) — it doesn't actually *compute*.",
+        "For exact arithmetic, statistics, date maths, or parsing, that means it can produce a",
+        "confident, perfectly-formatted answer that's subtly **wrong** — and because there's no",
+        "calculation underneath, you can't tell which digits to trust. The hand-worked standard",
+        "deviation *looked* rigorous, yet the final figure was off.",
+        "",
+        "## 🐍 What the code interpreter does",
+        "",
+        "The **code interpreter** is a built-in tool that gives the model a real **Python sandbox**.",
+        "You attach it with `tools: [{ type: \"code_interpreter\", container: { type: \"auto\" } }]`. The",
+        "model decides to use it, **writes Python**, the platform **executes** that code in an isolated",
+        "container, the model **sees the actual output**, and then answers from it. The generated code",
+        "and its result come back as a `code_interpreter_call` item in `output` — so the answer is now",
+        "**deterministic and inspectable**, not a guess.",
+        "",
+        "## 🆚 How it differs from your own tools",
+        "",
+        "In Topic 5 *you* wrote each function and ran the call loop yourself. The code interpreter is",
+        "different in two ways: the **model writes the code** (you don't predefine functions), and the",
+        "**platform runs it** for you in a managed sandbox — no loop on your side, as you saw here. It's",
+        "ideal for open-ended computation you can't anticipate: \"crunch these numbers\", \"parse this CSV\",",
+        "\"solve this equation\", \"make a chart\". For a fixed, known action (call *our* API, hit *our*",
+        "database) a regular tool is the better fit.",
+        "",
+        "## ⚖️ Things to weigh",
+        "",
+        "The code runs in a **sandboxed container** with no access to your systems unless you provide it,",
+        "which is what makes letting a model execute code acceptable. But it's still real execution: it",
+        "adds latency (spinning up and running the container), the model can write buggy code (it may",
+        "retry), and you're billed for the tokens of the code and its output. Use it when a task genuinely",
+        "needs computation — not for things the model can already answer directly.",
+        "",
+        "## 🧪 Exercises to think about",
+        "",
+        "- **Read the model's code.** The log prints the Python it wrote — does it match how you'd",
+        "compute it? Try a task it might get subtly wrong by hand (e.g. \"how many days between",
+        "2026-06-22 and 2027-03-01?\") and check the code, not just the answer.",
+        "- **Give it data to crunch.** Paste a list of numbers or a small CSV in the prompt and ask for",
+        "totals, averages, or the top 3 — watch it parse and compute instead of estimating.",
+        "- **Code interpreter or a tool (Topic 5)?** For \"compute the variance of these values\" vs",
+        "\"look up this customer's last order\", which fits which — and why?",
+      ].join("\n"),
+    },
+  },
 ];
 
 /**
@@ -1418,17 +1523,18 @@ const TOPIC_ORDER = [
   "state", // 3
   "reasoning", // 4
   "tools", // 5
-  "mcp", // 6
-  "rag", // 7
-  "structured-output", // 8
-  "streaming", // 9
-  "multimodal", // 10
-  "image-generation", // 11
-  "context-window", // 12
-  "skills", // 13
-  "evals", // 14
-  "agents", // 15
-  "multi-agent", // 16
+  "code-interpreter", // 6
+  "mcp", // 7
+  "rag", // 8
+  "structured-output", // 9
+  "streaming", // 10
+  "multimodal", // 11
+  "image-generation", // 12
+  "context-window", // 13
+  "skills", // 14
+  "evals", // 15
+  "agents", // 16
+  "multi-agent", // 17
 ];
 
 const byId = new Map(topicDefinitions.map((t) => [t.id, t]));

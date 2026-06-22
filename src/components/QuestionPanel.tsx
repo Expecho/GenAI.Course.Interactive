@@ -35,11 +35,14 @@ export function QuestionPanel({
   expected,
   runState,
   onCorrect,
+  onAnswered,
 }: {
   question: Question;
   expected: number | null;
   runState: RunState;
   onCorrect?: () => void;
+  /** Fires when a real answer is submitted, whether correct or incorrect. */
+  onAnswered?: () => void;
 }) {
   const [value, setValue] = useState("");
   const [checked, setChecked] = useState<"idle" | "correct" | "wrong">("idle");
@@ -63,6 +66,7 @@ export function QuestionPanel({
     setChecked(correct ? "correct" : "wrong");
     setFeedback(fb);
     setRevealed(true);
+    onAnswered?.(); // a real answer was submitted, right or wrong
     if (correct) onCorrect?.();
   }
 
@@ -70,9 +74,10 @@ export function QuestionPanel({
     if (question.kind !== "tokens" || expected === null) return;
     const guess = Number(value.trim());
     if (!Number.isFinite(guess)) {
-      setChecked("wrong");
+      setChecked("wrong"); // empty/invalid input — not counted as an answer
       return;
     }
+    onAnswered?.(); // a real numeric guess was submitted, right or wrong
     if (guess === expected) {
       setChecked("correct");
       setRevealed(true);

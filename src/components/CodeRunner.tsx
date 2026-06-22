@@ -11,26 +11,38 @@ import { useTheme } from "./ThemeProvider";
 export function CodeRunner({
   topic,
   onComplete,
+  prev,
+  next,
+  onNavigate,
 }: {
   topic: Topic;
   onComplete?: () => void;
+  prev?: Topic;
+  next?: Topic;
+  onNavigate?: (id: string) => void;
 }) {
   const primary = useCodeRun(topic.defaultCode ?? "");
   const fix = useCodeRun(topic.followUp?.code ?? "");
   const [correct, setCorrect] = useState(false);
+  const [answered, setAnswered] = useState(false);
 
-  // Topics without a checkpoint (the intro, or any text-only page) count as
-  // complete once visited. Topics with a question complete on a correct answer.
+  // A topic counts as complete once the learner has done everything it asks of
+  // them: answered the checkpoint question (correct OR incorrect) and run the
+  // follow-up block — for whichever of those the topic actually has. A topic
+  // with neither (the text-only intro) is complete as soon as it's opened.
+  const questionDone = !topic.question || answered;
+  const followUpDone = !topic.followUp || (fix.ran && fix.state !== "error");
   useEffect(() => {
-    if (!topic.question) onComplete?.();
+    if (questionDone && followUpDone) onComplete?.();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [topic.id]);
+  }, [questionDone, followUpDone]);
 
   // Text-only topics (e.g. the course introduction) have no editable code.
   if (topic.defaultCode === undefined) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-10">
         <Markdown markdown={topic.description} />
+        <TopicNav prev={prev} next={next} onNavigate={onNavigate} />
       </div>
     );
   }
@@ -70,10 +82,8 @@ export function CodeRunner({
           question={topic.question}
           expected={primary.totalTokens}
           runState={primary.state}
-          onCorrect={() => {
-            setCorrect(true);
-            onComplete?.();
-          }}
+          onCorrect={() => setCorrect(true)}
+          onAnswered={() => setAnswered(true)}
         />
       ),
     });
@@ -128,7 +138,45 @@ export function CodeRunner({
           </Step>
         ))}
       </ol>
+      <TopicNav prev={prev} next={next} onNavigate={onNavigate} />
     </div>
+  );
+}
+
+/** Previous / next links at the bottom of a topic page. */
+function TopicNav({
+  prev,
+  next,
+  onNavigate,
+}: {
+  prev?: Topic;
+  next?: Topic;
+  onNavigate?: (id: string) => void;
+}) {
+  if (!prev && !next) return null;
+
+  const linkClass =
+    "flex max-w-[48%] flex-col gap-0.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm transition-colors hover:bg-[var(--chip)]";
+
+  return (
+    <nav className="mt-8 flex items-stretch justify-between gap-3 border-t border-[var(--border)] pt-6">
+      {prev ? (
+        <button onClick={() => onNavigate?.(prev.id)} className={linkClass}>
+          <span className="text-xs text-[var(--fg-subtle)]">← Previous</span>
+          <span className="font-medium text-[var(--fg)]">{prev.title}</span>
+        </button>
+      ) : (
+        <span />
+      )}
+      {next ? (
+        <button onClick={() => onNavigate?.(next.id)} className={`${linkClass} ml-auto text-right`}>
+          <span className="text-xs text-[var(--fg-subtle)]">Next →</span>
+          <span className="font-medium text-[var(--fg)]">{next.title}</span>
+        </button>
+      ) : (
+        <span />
+      )}
+    </nav>
   );
 }
 

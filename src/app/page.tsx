@@ -20,9 +20,13 @@ export default function Home() {
   function select(id: string) {
     setActiveId(id);
     setLast(id);
+    if (typeof window !== "undefined") window.scrollTo({ top: 0 });
   }
 
-  const topic = topics.find((t) => t.id === activeId) ?? topics[0];
+  const index = topics.findIndex((t) => t.id === activeId);
+  const topic = topics[index] ?? topics[0];
+  const prev = index > 0 ? topics[index - 1] : undefined;
+  const next = index >= 0 && index < topics.length - 1 ? topics[index + 1] : undefined;
   const completedSet = new Set(completed);
 
   return (
@@ -35,7 +39,14 @@ export default function Home() {
         onReset={reset}
       />
       <section className="min-w-0 flex-1">
-        <CodeRunner key={topic.id} topic={topic} onComplete={() => markComplete(topic.id)} />
+        <CodeRunner
+          key={topic.id}
+          topic={topic}
+          onComplete={() => markComplete(topic.id)}
+          prev={prev}
+          next={next}
+          onNavigate={select}
+        />
       </section>
     </main>
   );

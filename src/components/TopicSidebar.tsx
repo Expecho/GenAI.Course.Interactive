@@ -54,7 +54,10 @@ export function TopicSidebar({
           );
         })}
       </ul>
-      <div className="border-t border-[var(--border)] p-3">
+      <div className="space-y-2 border-t border-[var(--border)] p-3">
+        <p className="px-1 text-xs text-[var(--fg-subtle)]">
+          {completed.size} of {topics.length} completed
+        </p>
         <button
           onClick={onReset}
           className="w-full rounded border border-[var(--border)] px-3 py-2 text-sm text-[var(--fg-muted)] transition-colors hover:bg-[var(--chip)] hover:text-[var(--fg)]"
