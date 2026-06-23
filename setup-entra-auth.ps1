@@ -27,10 +27,15 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-# ── Login ──────────────────────────────────────────────────────────────────────
-Write-Host "Logging in to tenant $TenantId..." -ForegroundColor Cyan
-az login --tenant $TenantId --allow-no-subscriptions
-if ($LASTEXITCODE -ne 0) { throw "az login failed" }
+# ── Login (skip if already authenticated to the target tenant) ─────────────────
+$currentTenant = az account show --query "tenantId" -o tsv 2>$null
+if ($currentTenant -eq $TenantId) {
+    Write-Host "Already logged in to tenant $TenantId." -ForegroundColor Green
+} else {
+    Write-Host "Logging in to tenant $TenantId..." -ForegroundColor Cyan
+    az login --tenant $TenantId --allow-no-subscriptions
+    if ($LASTEXITCODE -ne 0) { throw "az login failed" }
+}
 
 # ── Guard: abort if an app with this name already exists ──────────────────────
 $existing = az ad app list --display-name $AppName --query "[0].appId" -o tsv 2>$null
