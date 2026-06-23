@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { auth } from "@/auth";
 import {
   createClient,
   getDeployment,
@@ -14,9 +15,6 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 function readCreds(): FoundryCreds {
-  // createClient() validates that all required env vars are present and throws a
-  // friendly message if not. We reuse it for validation, then read the raw values
-  // to hand to the worker (which builds its own client).
   createClient();
   return {
     baseURL: toV1BaseURL(process.env.AZURE_AI_FOUNDRY_ENDPOINT!),
@@ -29,6 +27,9 @@ function readCreds(): FoundryCreds {
 }
 
 export async function POST(req: NextRequest) {
+  const session = await auth();
+  if (!session) return new Response("Unauthorized", { status: 401 });
+
   let code: string;
   try {
     const body = await req.json();
@@ -45,7 +46,6 @@ export async function POST(req: NextRequest) {
   try {
     creds = readCreds();
   } catch (err) {
-    // Stream the config error back through the same channel so the UI shows it.
     const message = (err as Error).message;
     const stream = new ReadableStream({
       start(controller) {
@@ -79,7 +79,6 @@ function toSse(event: SandboxEvent): string {
   return `data: ${JSON.stringify(event)}\n\n`;
 }
 
-// Helper for the early-error path where we don't yet have an encoder in scope.
 function sse(event: SandboxEvent): Uint8Array {
   return new TextEncoder().encode(toSse(event));
 }

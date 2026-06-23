@@ -1,14 +1,14 @@
 import { NextRequest } from "next/server";
+import { auth } from "@/auth";
 import { createClient, getDeployment } from "@/lib/azureClient";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/**
- * Grades a learner's free-text answer with the provisioned LLM (LLM-as-judge).
- * Body: { question, rubric, answer }. Returns { correct: boolean, feedback: string }.
- */
 export async function POST(req: NextRequest) {
+  const session = await auth();
+  if (!session) return new Response("Unauthorized", { status: 401 });
+
   let question = "";
   let rubric = "";
   let answer = "";
@@ -61,7 +61,6 @@ export async function POST(req: NextRequest) {
   }
 }
 
-/** Extract the {correct, feedback} JSON from the model's reply, tolerating stray prose. */
 function parseVerdict(text: string): { correct: boolean; feedback: string } {
   const start = text.indexOf("{");
   const end = text.lastIndexOf("}");
