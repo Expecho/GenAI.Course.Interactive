@@ -53,7 +53,15 @@ export function useProgress() {
   }, []);
 
   const markComplete = useCallback((id: string) => {
-    setProgress((p) => (p.completed.includes(id) ? p : { ...p, completed: [...p.completed, id] }));
+    setProgress((p) => {
+      if (p.completed.includes(id)) return p;
+      fetch("/api/progress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topicId: id }),
+      }).catch(() => {});
+      return { ...p, completed: [...p.completed, id] };
+    });
   }, []);
 
   const reset = useCallback(() => setProgress({ last: null, completed: [] }), []);
