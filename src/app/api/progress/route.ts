@@ -1,0 +1,46 @@
+export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
+
+import { NextRequest, NextResponse } from "next/server"
+import { auth } from "@/auth"
+import {
+  logTopicComplete,
+  logCourseComplete,
+  getCompletedTopicCount,
+  TOTAL_TOPICS,
+} from "@/lib/tableStorage"
+import { topics } from "@/workshop/topics"
+
+const validTopicIds = new Set(topics.map((t) => t.id))
+
+export async function POST(req: NextRequest) {
+  try {
+    const session = await auth()
+
+    if (!session || !session.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const { topicId } = await req.json()
+
+    if (!validTopicIds.has(topicId)) {
+      return NextResponse.json({ error: "Invalid topicId" }, { status: 400 })
+    }
+
+    const email = session.user.email
+    const name = session.user.name ?? ""
+    const userId = session.user.id ?? ""
+
+    await logTopicComplete(email, name, userId, topicId)
+
+    const count = await getCompletedTopicCount(email)
+    if (count >= TOTAL_TOPICS) {
+      await logCourseComplete(email, name, userId)
+    }
+
+    return NextResponse.json({ ok: true })
+  } catch (err) {
+    console.error("[activity-log]", err)
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 })
+  }
+}
