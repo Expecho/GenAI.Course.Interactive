@@ -51,21 +51,30 @@ export async function logLoginEvent(user: {
   name?: string | null;
   email?: string | null;
 }): Promise<void> {
+  if (!user.email) {
+    console.warn("[activity-log] logLoginEvent called without email");
+    return;
+  }
+
   const client = getClient(USER_ACTIVITY_TABLE);
-  const partitionKey = user.email!.toLowerCase();
+  const partitionKey = user.email.toLowerCase();
   const rowKey = "login-" + new Date().toISOString();
 
-  await client.upsertEntity(
-    {
-      partitionKey,
-      rowKey,
-      eventType: "login",
-      userName: user.name ?? "",
-      userId: user.id ?? "",
-      timestamp: new Date().toISOString(),
-    },
-    "Merge",
-  );
+  try {
+    await client.upsertEntity(
+      {
+        partitionKey,
+        rowKey,
+        eventType: "login",
+        userName: user.name ?? "",
+        userId: user.id ?? "",
+        timestamp: new Date().toISOString(),
+      },
+      "Merge",
+    );
+  } catch (err) {
+    console.error("[activity-log] logLoginEvent failed:", err);
+  }
 }
 
 /**
@@ -120,7 +129,7 @@ export async function logCourseComplete(
   try {
     await activityClient.createEntity({
       partitionKey: email.toLowerCase(),
-      rowKey: "course-complete-" + new Date().toISOString(),
+      rowKey: "course-complete",
       eventType: "course-complete",
       userName: name,
       userId,
@@ -130,7 +139,7 @@ export async function logCourseComplete(
     if (err instanceof RestError && err.statusCode === 409) {
       // Already logged — ignore
     } else {
-      throw err;
+      console.error("[activity-log] logCourseComplete failed:", err);
     }
   }
 }
