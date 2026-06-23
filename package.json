@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@azure/data-tables": "^13.3.2",
     "@monaco-editor/react": "^4.6.0",
     "esbuild": "^0.25.0",
     "next": "^15.1.0",
