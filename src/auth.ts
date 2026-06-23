@@ -1,5 +1,6 @@
 import NextAuth from "next-auth"
 import MicrosoftEntraID from "next-auth/providers/microsoft-entra-id"
+import { logLoginEvent } from "@/lib/tableStorage"
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
@@ -9,4 +10,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       issuer: process.env.AUTH_MICROSOFT_ENTRA_ID_ISSUER!,
     }),
   ],
+  events: {
+    async signIn({ user }) {
+      logLoginEvent(user).catch((err) =>
+        console.error("[activity-log] login event failed:", err)
+      )
+    },
+  },
 })
