@@ -113,7 +113,7 @@ Write-Host "==========================================================" -Foregro
 Write-Host " App registration complete. Copy this into your .env.local:" -ForegroundColor Green
 Write-Host "==========================================================" -ForegroundColor Green
 Write-Host ""
-Write-Host "AUTH_MICROSOFT_ENTRA_ID_ISSUER=https://login.microsoftonline.com/$TenantId/v2.0/"
+Write-Host "AUTH_MICROSOFT_ENTRA_ID_ISSUER=https://login.microsoftonline.com/$TenantId/v2.0"
 Write-Host "AUTH_MICROSOFT_ENTRA_ID_ID=$clientId"
 Write-Host "AUTH_MICROSOFT_ENTRA_ID_SECRET=$clientSecret"
 Write-Host "AUTH_SECRET=  # generate with: npx auth secret"
