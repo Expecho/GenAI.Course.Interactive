@@ -32,6 +32,15 @@ Write-Host "Logging in to tenant $TenantId..." -ForegroundColor Cyan
 az login --tenant $TenantId --allow-no-subscriptions
 if ($LASTEXITCODE -ne 0) { throw "az login failed" }
 
+# ── Guard: abort if an app with this name already exists ──────────────────────
+$existing = az ad app list --display-name $AppName --query "[0].appId" -o tsv 2>$null
+if ($existing) {
+    Write-Host ""
+    Write-Host "ERROR: An app registration named '$AppName' already exists (appId: $existing)." -ForegroundColor Red
+    Write-Host "Delete it first or choose a different -AppName to avoid duplicates." -ForegroundColor Red
+    exit 1
+}
+
 # ── Create app registration ────────────────────────────────────────────────────
 Write-Host "Creating app registration '$AppName'..." -ForegroundColor Cyan
 $app = az ad app create `
