@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 const KEY = "workshop-progress-v1";
 
@@ -52,16 +52,21 @@ export function useProgress() {
     setProgress((p) => (p.last === id ? p : { ...p, last: id }));
   }, []);
 
+  const reportedRef = useRef(new Set<string>());
+
   const markComplete = useCallback((id: string) => {
     setProgress((p) => {
       if (p.completed.includes(id)) return p;
+      return { ...p, completed: [...p.completed, id] };
+    });
+    if (!reportedRef.current.has(id)) {
+      reportedRef.current.add(id);
       fetch("/api/progress", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ topicId: id }),
       }).catch(() => {});
-      return { ...p, completed: [...p.completed, id] };
-    });
+    }
   }, []);
 
   const reset = useCallback(() => setProgress({ last: null, completed: [] }), []);

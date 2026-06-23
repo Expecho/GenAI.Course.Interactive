@@ -21,7 +21,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { topicId } = await req.json()
+    let topicId: unknown
+    try {
+      const body = await req.json()
+      topicId = body?.topicId
+    } catch {
+      return NextResponse.json({ error: "Invalid request body" }, { status: 400 })
+    }
+    if (typeof topicId !== "string" || topicId.trim() === "") {
+      return NextResponse.json({ error: "Invalid topicId" }, { status: 400 })
+    }
 
     if (!validTopicIds.has(topicId)) {
       return NextResponse.json({ error: "Invalid topicId" }, { status: 400 })

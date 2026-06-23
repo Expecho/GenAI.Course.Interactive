@@ -1,7 +1,7 @@
 import "server-only";
 import { TableClient, odata, RestError } from "@azure/data-tables";
 
-export const TOTAL_TOPICS = 18;
+export const TOTAL_TOPICS = 17;
 
 const USER_ACTIVITY_TABLE = "UserActivity";
 const USER_PROGRESS_TABLE = "UserProgress";
@@ -86,34 +86,38 @@ export async function logTopicComplete(
   userId: string,
   topicId: string,
 ): Promise<void> {
-  const pk = email.toLowerCase();
+  try {
+    const pk = email.toLowerCase();
 
-  // Upsert into UserProgress
-  const progressClient = getClient(USER_PROGRESS_TABLE);
-  await progressClient.upsertEntity(
-    {
-      partitionKey: pk,
-      rowKey: topicId,
-      completedAt: new Date().toISOString(),
-      userName: name,
-    },
-    "Merge",
-  );
+    // Upsert into UserProgress
+    const progressClient = getClient(USER_PROGRESS_TABLE);
+    await progressClient.upsertEntity(
+      {
+        partitionKey: pk,
+        rowKey: topicId,
+        completedAt: new Date().toISOString(),
+        userName: name,
+      },
+      "Merge",
+    );
 
-  // Append to UserActivity
-  const activityClient = getClient(USER_ACTIVITY_TABLE);
-  await activityClient.upsertEntity(
-    {
-      partitionKey: pk,
-      rowKey: "topic-" + topicId + "-" + new Date().toISOString(),
-      eventType: "topic-complete",
-      topicId,
-      userName: name,
-      userId,
-      timestamp: new Date().toISOString(),
-    },
-    "Merge",
-  );
+    // Append to UserActivity
+    const activityClient = getClient(USER_ACTIVITY_TABLE);
+    await activityClient.upsertEntity(
+      {
+        partitionKey: pk,
+        rowKey: "topic-" + topicId + "-" + new Date().toISOString(),
+        eventType: "topic-complete",
+        topicId,
+        userName: name,
+        userId,
+        timestamp: new Date().toISOString(),
+      },
+      "Merge",
+    );
+  } catch (err) {
+    console.error("[activity-log] logTopicComplete failed:", err);
+  }
 }
 
 /**
