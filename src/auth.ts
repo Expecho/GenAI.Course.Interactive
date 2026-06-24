@@ -1,6 +1,5 @@
 import NextAuth from "next-auth"
 import MicrosoftEntraID from "next-auth/providers/microsoft-entra-id"
-import { logLoginEvent } from "@/lib/tableStorage"
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
@@ -12,9 +11,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   events: {
     async signIn({ user }) {
-      logLoginEvent(user).catch((err) =>
-        console.error("[activity-log] login event failed:", err)
-      )
+      // Dynamic import keeps @azure/data-tables out of the middleware bundle.
+      // The middleware runs in the Edge Runtime and would crash on the static import.
+      import("@/lib/tableStorage")
+        .then(({ logLoginEvent }) => logLoginEvent(user))
+        .catch((err) => console.error("[activity-log] login event failed:", err))
     },
   },
 })
