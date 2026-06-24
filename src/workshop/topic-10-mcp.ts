@@ -16,7 +16,7 @@ const res = await client.responses.create({
     },
   ],
   input:
-    "Use the Microsoft Learn tools to answer: what is the default api-version behaviour for the Azure OpenAI v1 API? Answer in one sentence.",
+    "Use the Microsoft Learn tools to answer: what is Azure AI Foundry? Answer in one sentence.",
 });
 
 // Notice the extra item types the MCP tool adds to the output.

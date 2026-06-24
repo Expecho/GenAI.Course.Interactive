@@ -93,7 +93,7 @@ export function CodeRunner({
     const fu = topic.followUp;
     steps.push({
       status: codeStatus(fix),
-      title: "Now give it memory",
+      title: fu.title,
       action: <RunButton run={fix} />,
       content: (
         <div className="space-y-4">

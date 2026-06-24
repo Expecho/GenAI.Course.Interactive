@@ -24,6 +24,7 @@ export type Topic = {
   defaultCode?: string; // pre-filled editable TS; omit for a text-only topic (e.g. the intro)
   question?: Question; // optional interactive checkpoint question
   followUp?: {
+    title: string; // heading shown on the follow-up step card
     intro: string; // markdown shown above the second (fixed) code block
     code: string; // a second editable/runnable code block, after the checkpoint
     explanation: string; // takeaway markdown revealed after running the fixed code
@@ -99,7 +100,7 @@ const topicDefinitions: Topic[] = [
     defaultCode: topic01DefaultCode,
     question: {
       kind: "tokens",
-      prompt: "How many tokens did this call cost?",
+      prompt: "How many tokens did this call cost? (Look at the raw response & usage.)",
       explanation: [
         "## 🔤 What is a token?",
         "",
@@ -256,6 +257,7 @@ const topicDefinitions: Topic[] = [
       ].join("\n"),
     },
     followUp: {
+      title: "Now give it memory",
       intro: [
         "The model still has no memory — **we** give it one. We keep a `history` array of messages",
         "and send the whole conversation on every call, so the second request already contains",
@@ -341,6 +343,7 @@ const topicDefinitions: Topic[] = [
       ].join("\n"),
     },
     followUp: {
+      title: "Now add a tool",
       intro: [
         "We give the model a **tool** — a function it can ask us to run. We describe",
         "`get_current_datetime`; the model decides to call it, we execute it and pass the result",
@@ -429,6 +432,7 @@ const topicDefinitions: Topic[] = [
       ].join("\n"),
     },
     followUp: {
+      title: "Now add a schema",
       intro: [
         "We attach a **JSON schema** via `text.format`. With `strict: true` the model is constrained",
         "to return valid JSON that matches the schema exactly — the right fields, the right types,",
@@ -579,6 +583,7 @@ const topicDefinitions: Topic[] = [
       ].join("\n"),
     },
     followUp: {
+      title: "Now add retrieval",
       intro: [
         "This is **RAG — retrieval-augmented generation**, done with **embeddings**. We turn each",
         "document and the question into vectors, rank documents by **cosine similarity**, inject the",
@@ -926,6 +931,7 @@ const topicDefinitions: Topic[] = [
       ].join("\n"),
     },
     followUp: {
+      title: "Now raise the limit",
       intro: [
         "The cap was the problem — raise `max_output_tokens` and the answer finishes (`status:",
         "\"completed\"`). The real lesson is that input and output draw from **one shared budget**.",
@@ -1038,6 +1044,19 @@ const topicDefinitions: Topic[] = [
         "(Topic 2) — the same prompt yields a different picture each run — and the prompt wording matters",
         "a lot. Providers also apply content filters to what can be generated.",
         "",
+        "## 🔀 How ChatGPT hides this from you",
+        "",
+        "When you ask ChatGPT to \"draw me a cat\" and then \"explain what's in the image\" in the same",
+        "chat, it feels like one seamless model. It isn't. ChatGPT uses a **model router** that inspects",
+        "your message and silently dispatches it to whichever specialist model fits best — the text/reasoning",
+        "model for conversation, the image-generation model for \"draw me…\", the vision model for",
+        "\"what's in this image?\", and so on. You see one chat window; behind it is a fleet of models",
+        "and a router deciding which one handles each turn.",
+        "",
+        "This is exactly what we've been building piece by piece: tools (Topic 5), multiple models,",
+        "different endpoints. A polished product just wraps all of that in one interface so users",
+        "never see the seams.",
+        "",
         "## 🧪 Exercises to think about",
         "",
         "- **Change the style.** Edit the prompt — try \"as a watercolour painting\" or \"as a 3D render\"",
@@ -1094,6 +1113,7 @@ const topicDefinitions: Topic[] = [
       ].join("\n"),
     },
     followUp: {
+      title: "Now run an eval",
       intro: [
         "An **eval** runs the feature over a labelled test set and scores it. Each case has a known",
         "correct answer; we compare the model's output and report a pass rate. The enum structured",
@@ -1456,6 +1476,7 @@ const topicDefinitions: Topic[] = [
       ].join("\n"),
     },
     followUp: {
+      title: "Now run the code",
       intro: [
         "We attach the built-in **`code_interpreter`** tool — a hosted Python sandbox. The model",
         "writes Python, the platform **runs it in a container**, and the model reads the real output",
