@@ -1531,6 +1531,57 @@ const topicDefinitions: Topic[] = [
       ].join("\n"),
     },
   },
+  {
+    id: "recap",
+    title: "Recap",
+    description: [
+      "## 🗺️ The bigger picture",
+      "",
+      "You started this workshop with a question: how do you get from a frozen token predictor to a",
+      "polished AI assistant? By now you've built that bridge yourself — one capability at a time.",
+      "",
+      "### 🧱 The foundation",
+      "",
+      "An LLM is a **token predictor** — probabilistic, stateless, frozen at its training cutoff.",
+      "Everything you've seen is built on top of those three constraints, not around them.",
+      "",
+      "- **Tokens & cost** (Topic 1) — the unit everything is measured in; output tokens cost more than input",
+      "- **Non-determinism** (Topic 2) — same input, different output, every time; `temperature` controls how much",
+      "- **Statelessness** (Topic 3) — the model has no memory; you maintain the history and pay for it in tokens",
+      "",
+      "### 🔌 Extending the model's reach",
+      "",
+      "The model can't browse, calculate, or see your data — so you bridge those gaps from the outside.",
+      "You hand it what it needs; it can't fetch anything itself.",
+      "",
+      "- **Reasoning** (Topic 4) — internal chain-of-thought improves hard problems but costs output tokens",
+      "- **Tools & code** (Topics 5, 6) — live data and real computation; tools call your code, the code interpreter writes its own",
+      "- **MCP** (Topic 7) — standard protocol to expose tools at scale, reusable across apps and agents",
+      "- **RAG** (Topic 8) — ground answers in your own documents; embeddings match on meaning, not keywords",
+      "- **Multimodal & images** (Topics 11, 12) — different models for different modalities; a model router",
+      "ties them together — that's the seam ChatGPT hides",
+      "",
+      "### ⚖️ Working within limits",
+      "",
+      "Every capability has a cost. The art is managing what you load and when.",
+      "",
+      "- **Structured output** (Topic 9) — a schema constrains the shape; asking nicely is not enough",
+      "- **Streaming** (Topic 10) — same total cost, dramatically better perceived latency",
+      "- **Context windows** (Topic 13) — one shared budget for input and output; history, tools, and retrieved docs all compete for it",
+      "- **Skills** (Topic 14) — load instructions on demand to keep context lean and scale to many capabilities",
+      "",
+      "### 🚀 Building at scale",
+      "",
+      "Autonomous, multi-step, multi-model systems — and the discipline to keep them trustworthy.",
+      "",
+      "- **Evals & guardrails** (Topic 15) — non-determinism means \"it worked once\" proves nothing; measure across cases and run in CI",
+      "- **Agents** (Topic 16) — the tool loop made autonomous; frameworks handle the plumbing you'd otherwise rewrite every time",
+      "- **Multi-agent systems** (Topic 17) — specialists + orchestrators + protocols; MCP connects agents to tools, A2A connects agents to agents",
+      "",
+      "The polished assistant you knew at the start is the same machine you've been experimenting with —",
+      "just with all of this wired together and the seams hidden. **Now you know where the seams are.**",
+    ].join("\n"),
+  },
 ];
 
 /**
@@ -1556,6 +1607,7 @@ const TOPIC_ORDER = [
   "evals", // 15
   "agents", // 16
   "multi-agent", // 17
+  "recap",
 ];
 
 const byId = new Map(topicDefinitions.map((t) => [t.id, t]));

@@ -1,5 +1,5 @@
 /**
- * Minimal markdown rendering — enough for headings (`## `), bold (`**`), inline
+ * Minimal markdown rendering — enough for headings (`## `, `### `), bold (`**`), inline
  * code (`` ` ``), paragraphs, and bullet lists (`- `) without pulling in a
  * markdown dependency. Content is author-controlled (topic text), and `inline()`
  * HTML-escapes before applying formatting, so there's no untrusted-content path.
@@ -32,6 +32,17 @@ export function Markdown({ markdown }: { markdown: string }) {
         const rest = lines.slice(1);
         const restHtml = rest.length ? `<div class="mt-1">${renderBody(rest)}</div>` : "";
         return `<div><h2 class="flex items-center text-lg font-semibold text-[var(--fg)]">${iconHtml}<span>${heading}</span></h2>${restHtml}</div>`;
+      }
+      if (lines[0].startsWith("### ")) {
+        const raw = lines[0].slice(4);
+        const iconMatch = raw.match(/^(\p{Extended_Pictographic}(?:️)?)\s+/u);
+        const iconHtml = iconMatch
+          ? `<span class="mr-1.5 text-base leading-none">${iconMatch[1]}</span>`
+          : "";
+        const heading = inline(iconMatch ? raw.slice(iconMatch[0].length) : raw);
+        const rest = lines.slice(1);
+        const restHtml = rest.length ? `<div class="mt-1">${renderBody(rest)}</div>` : "";
+        return `<div><h3 class="flex items-center text-base font-semibold text-[var(--fg)]">${iconHtml}<span>${heading}</span></h3>${restHtml}</div>`;
       }
       return `<div>${renderBody(lines)}</div>`;
     })
