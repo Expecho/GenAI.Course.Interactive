@@ -21,6 +21,17 @@ export function Markdown({ markdown }: { markdown: string }) {
 
   const html = blocks
     .map((lines) => {
+      // Block-level image: a single line of the form ![alt](url)
+      if (lines.length === 1) {
+        const imgMatch = lines[0].match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
+        if (imgMatch && /^(https?:\/\/|\/)/.test(imgMatch[2])) {
+          const alt = imgMatch[1]
+            .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+          const src = imgMatch[2].replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+          return `<div class="my-2"><img src="${src}" alt="${alt}" class="max-w-full rounded border border-[var(--border)]" /></div>`;
+        }
+      }
       if (lines[0].startsWith("## ")) {
         const raw = lines[0].slice(3);
         // An optional leading emoji becomes a section icon.
@@ -74,6 +85,11 @@ function inline(s: string): string {
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
+    .replace(
+      /\[(.+?)\]\((https?:\/\/[^)\s"'<>]+)\)/g,
+      (_, text, url) =>
+        `<a href="${url.replace(/"/g, "&quot;").replace(/'/g, "&#39;")}" target="_blank" rel="noopener noreferrer" class="text-[var(--info)] underline underline-offset-2 hover:opacity-80">${text}</a>`,
+    )
     .replace(/\*\*(.+?)\*\*/g, '<strong class="text-[var(--fg-body)]">$1</strong>')
     .replace(/`(.+?)`/g, '<code class="rounded bg-[var(--chip)] px-1 py-0.5 text-[var(--fg-body)]">$1</code>');
 }
