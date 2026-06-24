@@ -4,8 +4,8 @@ import { ThemeProvider, themeInitScript } from "@/components/ThemeProvider";
 import { auth, signOut } from "@/auth";
 
 export const metadata: Metadata = {
-  title: "GenAI Workshop",
-  description: "Hands-on, web-based GenAI workshop — edit code and watch it run live.",
+  title: "Generative AI Workshop",
+  description: "Hands-on, web-based Generative AI workshop — edit code and watch it run live.",
 };
 
 export default async function RootLayout({

@@ -45,7 +45,7 @@ const topicDefinitions: Topic[] = [
     id: "introduction",
     title: "Introduction",
     description: [
-      "## 👋 Welcome to the GenAI workshop",
+      "## 👋 Welcome to the Generative AI interactive workshop",
       "",
       "You've all seen the power of ChatGPT, Claude, or Microsoft Copilot: seemingly all-knowing AI",
       "that connects to everything, answers anything, and works across text, images, and speech.",

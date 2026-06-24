@@ -20,7 +20,7 @@ export function TopicSidebar({
     <nav className="sticky top-0 flex h-screen w-64 shrink-0 flex-col border-r border-[var(--border)] bg-[var(--bg)]">
       <div className="flex items-start justify-between border-b border-[var(--border)] px-4 py-4">
         <div>
-          <h1 className="text-sm font-semibold tracking-wide text-[var(--fg)]">GenAI Workshop</h1>
+          <h1 className="text-sm font-semibold tracking-wide text-[var(--fg)]">Generative AI Workshop</h1>
           <p className="mt-1 text-xs text-[var(--fg-subtle)]">Edit code · run it · watch it stream</p>
         </div>
         <ThemeToggle />
