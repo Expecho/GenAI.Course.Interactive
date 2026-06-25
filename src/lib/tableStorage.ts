@@ -148,6 +148,46 @@ export async function logCourseComplete(
   }
 }
 
+export interface UserProgressSummary {
+  email: string;
+  name: string;
+  topics: number;
+  lastActivity: string | null;
+}
+
+/**
+ * Returns a summary of all users' progress, grouped by email.
+ */
+export async function getAllUserProgress(): Promise<UserProgressSummary[]> {
+  const progressClient = getClient(USER_PROGRESS_TABLE);
+  const entities = progressClient.listEntities<{
+    partitionKey: string;
+    rowKey: string;
+    completedAt?: string;
+    userName?: string;
+  }>();
+
+  const map = new Map<string, UserProgressSummary>();
+
+  for await (const entity of entities) {
+    const email = entity.partitionKey;
+    const existing = map.get(email);
+    const lastActivity = entity.completedAt ?? null;
+
+    if (!existing) {
+      map.set(email, { email, name: entity.userName ?? "", topics: 1, lastActivity });
+    } else {
+      existing.topics++;
+      if (!existing.name && entity.userName) existing.name = entity.userName;
+      if (lastActivity && (!existing.lastActivity || lastActivity > existing.lastActivity)) {
+        existing.lastActivity = lastActivity;
+      }
+    }
+  }
+
+  return Array.from(map.values());
+}
+
 /**
  * Returns the number of topics this user has completed.
  */
