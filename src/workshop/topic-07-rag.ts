@@ -56,7 +56,7 @@ const ranked = documents
 
 ranked.forEach((r) => console.log(r.score.toFixed(3) + "  " + r.doc.slice(0, 45) + "…"));
 
-const top = ranked.slice(0, 1).map((r) => r.doc);
+const top = ranked[0];
 
 // 3) AUGMENT + GENERATE — inject the best match and answer from it.
 const res = await client.responses.create({
@@ -65,12 +65,19 @@ const res = await client.responses.create({
     {
       role: "system",
       content:
-        "Answer ONLY using the provided context. If it is not in the context, say you do not know.\\n\\nContext:\\n" +
-        top.join("\\n"),
+        "Answer ONLY using the provided context. If the answer is not in the context, say you do not know.\\n\\nContext:\\n" +
+        top.doc,
     },
     { role: "user", content: question },
   ],
 });
+
+// Show annotations: which document grounded the answer and how confident the retrieval was.
+const annotations = [{ score: top.score, source: top.doc }];
+console.log("\\n📎 Annotations (retrieval provenance):");
+annotations.forEach((a) =>
+  console.log("  score " + a.score.toFixed(3) + " · " + a.source)
+);
 
 return res; // grounded in the retrieved document
 `;
