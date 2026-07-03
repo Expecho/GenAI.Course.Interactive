@@ -562,14 +562,14 @@ const topicDefinitions: Topic[] = [
       "## grounding the model in your own data",
       "",
       "A model only knows its training data — not your private documents, internal policies, or",
-      "anything specific to you. Ask it about that and it will often **make something up** rather",
-      "than admit it doesn't know. Let's see that happen, then fix it.",
+      "anything specific to you. Ask it about that and it will often ask you to share the PTO policy or",
+      " list most common policies. Let's see that happen, then fix it.",
     ].join("\n"),
     defaultCode: topic07DefaultCode,
     question: {
       kind: "text",
       prompt:
-        "The model invented an answer about our internal policy. How can we get it to answer correctly from our own documents?",
+        "The model could not provide an answer and asks for more details. How can we get it to answer correctly from our own documents?",
       rubric:
         "Correct if the answer is about retrieving the relevant document(s) and providing/injecting " +
         "that text into the prompt as context so the model answers from it — i.e. the idea behind " +
@@ -655,7 +655,8 @@ const topicDefinitions: Topic[] = [
         "",
         "## Reading material",
         "",
-        "[Deep dive into RAG](https://www.promptingguide.ai/research/rag)",
+        "- [How Embeddings Work](https://www.aimadetools.com/blog/how-embeddings-work/)",
+        "- [Deep dive into RAG](https://www.promptingguide.ai/research/rag)",
       ].join("\n"),
     },
   },
