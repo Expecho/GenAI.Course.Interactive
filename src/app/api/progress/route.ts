@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic"
 
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
+import { trackException } from "@/lib/telemetry"
 import {
   logTopicComplete,
   logCourseComplete,
@@ -49,6 +50,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true })
   } catch (err) {
+    trackException(err, { source: "api/progress" })
     console.error("[activity-log]", err)
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 })
   }

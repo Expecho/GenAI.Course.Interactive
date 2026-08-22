@@ -27,12 +27,15 @@ export type CodeRun = {
   run: () => void;
 };
 
+/** Sent with each run so server-side error reports say which exercise broke. */
+export type RunMeta = { topicId?: string; block?: "main" | "followUp" };
+
 /**
  * Owns one editable code block and its run: streams output from /api/run,
  * collecting console logs, the returned result (answer + raw JSON), and the
  * token count. A lesson can use several of these for independent code blocks.
  */
-export function useCodeRun(initialCode: string): CodeRun {
+export function useCodeRun(initialCode: string, meta?: RunMeta): CodeRun {
   const [code, setCode] = useState(initialCode);
   const [logs, setLogs] = useState<LogLine[]>([]);
   const [answer, setAnswer] = useState("");
@@ -64,7 +67,7 @@ export function useCodeRun(initialCode: string): CodeRun {
       res = await fetch("/api/run", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code }),
+        body: JSON.stringify({ code, topicId: meta?.topicId, block: meta?.block }),
         signal: controller.signal,
       });
     } catch (err) {

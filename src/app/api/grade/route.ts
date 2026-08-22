@@ -1,13 +1,20 @@
 import { NextRequest } from "next/server";
 import { auth } from "@/auth";
 import { createClient, getDeployment } from "@/lib/azureClient";
+import { trackEvent, trackException } from "@/lib/telemetry";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   const session = await auth();
-  if (!session) return new Response("Unauthorized", { status: 401 });
+  // Check the email, not just the session: in a production build `auth()`
+  // resolves to a truthy object for an unauthenticated caller, so a bare
+  // `!session` check lets anonymous requests spend Foundry quota.
+  // (Same guard as /api/progress.)
+  if (!session?.user?.email) return new Response("Unauthorized", { status: 401 });
+
+  const email = session.user.email;
 
   let question = "";
   let rubric = "";
@@ -17,7 +24,13 @@ export async function POST(req: NextRequest) {
     question = String(body?.question ?? "");
     rubric = String(body?.rubric ?? "");
     answer = String(body?.answer ?? "");
-  } catch {
+  } catch (err) {
+    trackException(err, {
+      source: "api/grade",
+      phase: "request",
+      reason: "invalid-json",
+      email,
+    });
     return Response.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
@@ -29,6 +42,7 @@ export async function POST(req: NextRequest) {
   try {
     client = createClient();
   } catch (err) {
+    trackException(err, { source: "api/grade", phase: "config", email });
     return Response.json({ error: (err as Error).message }, { status: 500 });
   }
 
@@ -57,7 +71,25 @@ export async function POST(req: NextRequest) {
     const verdict = parseVerdict(text);
     return Response.json(verdict);
   } catch (err) {
-    return Response.json({ error: (err as Error).message }, { status: 502 });
+    // The OpenAI SDK's APIError carries the detail worth keeping: which status
+    // Azure returned, and the request id their support asks for.
+    const e = err as Error & {
+      status?: number;
+      code?: string | null;
+      type?: string;
+      request_id?: string | null;
+    };
+    trackException(e, {
+      source: "api/grade",
+      phase: "api",
+      email,
+      httpStatus: e.status,
+      errorCode: e.code,
+      errorType: e.type,
+      requestId: e.request_id,
+      model: getDeployment(),
+    });
+    return Response.json({ error: e.message }, { status: 502 });
   }
 }
 
@@ -72,7 +104,13 @@ function parseVerdict(text: string): { correct: boolean; feedback: string } {
         feedback: typeof obj.feedback === "string" ? obj.feedback : "",
       };
     } catch {
-      /* fall through */
+      // The model returned something that isn't the JSON we asked for. Not an
+      // exception — a model-behaviour problem worth spotting as a trend.
+      trackEvent("GradeParseFailure", {
+        source: "api/grade",
+        rawLength: text.length,
+        rawPrefix: text.slice(0, 500),
+      });
     }
   }
   return { correct: false, feedback: "Could not grade the answer — please try again." };

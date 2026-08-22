@@ -23,10 +23,169 @@ function send(msg) {
   parentPort.postMessage(msg);
 }
 
+// Pulls diagnostics off an error so /api/run can report them. Reads only the
+// error object — never creds — and can never throw, since a failure to build
+// diagnostics must not turn into a failed run.
+// OpenAI APIError carries: status, code, param, type, request_id, error (body).
+function errDetail(err, fallbackPhase) {
+  var d = { phase: fallbackPhase };
+  if (!err || typeof err !== "object") return d;
+  try {
+    if (typeof err.name === "string") d.name = err.name;
+    if (typeof err.stack === "string") d.stack = String(err.stack).slice(0, 4000);
+    if (typeof err.status === "number") d.status = err.status;
+    var code = err.code;
+    if (code == null && err.error && err.error.code != null) code = err.error.code;
+    if (code != null) d.code = String(code);
+    if (err.type != null) d.errType = String(err.type);
+    var rid = err.request_id;
+    if (!rid && err.headers) {
+      try {
+        rid = err.headers["x-request-id"] || err.headers["apim-request-id"];
+      } catch (e) { /* headers may be a Headers instance */ }
+    }
+    if (rid) d.requestId = String(rid);
+    // A status or a request id means this came back from Azure OpenAI.
+    if (d.status !== undefined || d.requestId !== undefined) d.phase = "api";
+  } catch (e) { /* diagnostics must never break a run */ }
+  return d;
+}
+
 function fmt(args) {
   return args
     .map((a) => (typeof a === "string" ? a : util.inspect(a, { depth: null, colors: false })))
     .join(" ");
+}
+
+// The SDK's own default fetch on Node. Delegating to it (rather than the
+// global one) keeps request behaviour — streaming included — byte-identical to
+// an uninstrumented client.
+const baseFetch = (() => {
+  try {
+    const nf = require("node-fetch");
+    return nf.default || nf;
+  } catch (e) {
+    return globalThis.fetch;
+  }
+})();
+
+// Bodies we're willing to buffer for telemetry. Keeps a base64 image response
+// out of memory while still covering ordinary JSON replies.
+const MAX_BODY_SNIFF = 512 * 1024;
+
+// Usage reads run in the background so they never delay the participant's call.
+// \`done\` waits on these, so a run can't finish before its telemetry is sent.
+const pendingUsage = [];
+
+function requestModel(init) {
+  try {
+    const body = init && init.body;
+    if (typeof body !== "string" || body.length > MAX_BODY_SNIFF) return undefined;
+    const parsed = JSON.parse(body);
+    return typeof parsed.model === "string" ? parsed.model : undefined;
+  } catch (e) {
+    return undefined;
+  }
+}
+
+function requestPath(url) {
+  try {
+    return new URL(String(url && url.url ? url.url : url)).pathname;
+  } catch (e) {
+    return undefined;
+  }
+}
+
+function header(res, name) {
+  try {
+    return res.headers.get(name) || undefined;
+  } catch (e) {
+    return undefined;
+  }
+}
+
+/**
+ * Times every HTTP call the OpenAI SDK makes on the participant's behalf and
+ * reports it to the host thread, which forwards it to Application Insights.
+ *
+ * This exists because Application Insights only auto-instruments the thread it
+ * was started on: the worker gets a fresh module registry, so nothing here is
+ * patched and these calls would otherwise be invisible.
+ *
+ * Nothing in the reported record comes from \`creds\` — only the URL path, the
+ * requested model, and response metadata.
+ */
+async function instrumentedFetch(url, init) {
+  const started = Date.now();
+  const call = {
+    type: "apiCall",
+    path: requestPath(url),
+    method: (init && init.method) || "GET",
+    model: requestModel(init),
+  };
+
+  let res;
+  try {
+    res = await baseFetch(url, init);
+  } catch (err) {
+    call.durationMs = Date.now() - started;
+    call.success = false;
+    call.error = err && err.message ? String(err.message) : String(err);
+    send(call);
+    throw err;
+  }
+
+  call.durationMs = Date.now() - started;
+  call.status = res.status;
+  call.success = !!res.ok;
+  call.requestId = header(res, "x-request-id") || header(res, "apim-request-id");
+
+  const contentType = header(res, "content-type") || "";
+  call.streaming = contentType.indexOf("text/event-stream") !== -1;
+
+  // Token usage lives in the response body. Read it from a clone — never from
+  // \`res\` itself, which belongs to the SDK — and only for a small, complete
+  // JSON reply. Teeing an SSE stream would buffer the whole generation.
+  const length = Number(header(res, "content-length") || 0);
+  const peekable =
+    !call.streaming &&
+    res.ok &&
+    contentType.indexOf("json") !== -1 &&
+    length > 0 &&
+    length <= MAX_BODY_SNIFF;
+
+  if (!peekable) {
+    send(call);
+    return res;
+  }
+
+  // Both bodies are drained concurrently: the SDK reads the original while we
+  // read the clone. Awaiting the clone here instead would deadlock — piping
+  // stalls once the unread side fills its buffer.
+  let clone;
+  try {
+    clone = res.clone();
+  } catch (e) {
+    send(call);
+    return res;
+  }
+
+  pendingUsage.push(
+    clone
+      .json()
+      .then((body) => {
+        const u = body && body.usage;
+        if (u) {
+          call.inputTokens = u.input_tokens != null ? u.input_tokens : u.prompt_tokens;
+          call.outputTokens = u.output_tokens != null ? u.output_tokens : u.completion_tokens;
+          call.totalTokens = u.total_tokens;
+        }
+      })
+      .catch(() => { /* usage is a bonus — never fail a run for it */ })
+      .then(() => send(call)),
+  );
+
+  return res;
 }
 
 // Built in the host scope — the key lives here, never enters the vm context.
@@ -34,6 +193,7 @@ function fmt(args) {
 const client = new OpenAI({
   baseURL: creds.baseURL,
   apiKey: creds.apiKey,
+  fetch: instrumentedFetch,
 });
 
 const sandboxConsole = {
@@ -86,10 +246,24 @@ try {
         } catch (e) { /* no output_text getter */ }
         send({ type: "result", text: text, answer: answer });
       }
-      send({ type: "done" });
+      // The host terminates the worker as soon as \`done\` arrives, so settle
+      // the outstanding usage reads first or their apiCall events are lost.
+      return Promise.allSettled(pendingUsage).then(() => send({ type: "done" }));
     })
-    .catch((err) => send({ type: "error", message: err && err.message ? err.message : String(err) }));
+    .catch((err) =>
+      Promise.allSettled(pendingUsage).then(() =>
+        send({
+          type: "error",
+          message: err && err.message ? err.message : String(err),
+          detail: errDetail(err, "runtime"),
+        }),
+      ),
+    );
 } catch (err) {
-  send({ type: "error", message: err && err.message ? err.message : String(err) });
+  send({
+    type: "error",
+    message: err && err.message ? err.message : String(err),
+    detail: errDetail(err, "compile"),
+  });
 }
 `;

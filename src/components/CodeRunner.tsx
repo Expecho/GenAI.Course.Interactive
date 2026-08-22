@@ -21,8 +21,8 @@ export function CodeRunner({
   next?: Topic;
   onNavigate?: (id: string) => void;
 }) {
-  const primary = useCodeRun(topic.defaultCode ?? "");
-  const fix = useCodeRun(topic.followUp?.code ?? "");
+  const primary = useCodeRun(topic.defaultCode ?? "", { topicId: topic.id, block: "main" });
+  const fix = useCodeRun(topic.followUp?.code ?? "", { topicId: topic.id, block: "followUp" });
   const [correct, setCorrect] = useState(false);
   const [answered, setAnswered] = useState(false);
 

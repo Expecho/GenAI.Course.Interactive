@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { getAllUserProgress, TOTAL_TOPICS } from "@/lib/tableStorage";
+import { getAllUserProgress, getAllFeedback, TOTAL_TOPICS } from "@/lib/tableStorage";
 import AdminDashboard from "./AdminDashboard";
 
 export default async function AdminPage() {
@@ -15,7 +15,7 @@ export default async function AdminPage() {
     redirect("/");
   }
 
-  const users = await getAllUserProgress();
+  const [users, feedback] = await Promise.all([getAllUserProgress(), getAllFeedback()]);
 
-  return <AdminDashboard users={users} totalTopics={TOTAL_TOPICS} />;
+  return <AdminDashboard users={users} totalTopics={TOTAL_TOPICS} feedback={feedback} />;
 }

@@ -2,6 +2,8 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import type { FeedbackEntry } from "@/lib/tableStorage";
+import FeedbackPanel from "./FeedbackPanel";
 
 interface User {
   email: string;
@@ -13,14 +15,17 @@ interface User {
 interface Props {
   users: User[];
   totalTopics: number;
+  feedback: FeedbackEntry[];
 }
 
 type SortKey = "name" | "email" | "topics" | "status" | "date";
 type FilterKey = "all" | "progress" | "complete";
+type Tab = "progress" | "feedback";
 
-export default function AdminDashboard({ users, totalTopics }: Props) {
+export default function AdminDashboard({ users, totalTopics, feedback }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [tab, setTab] = useState<Tab>("progress");
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<FilterKey>("all");
   const [sortKey, setSortKey] = useState<SortKey>("topics");
@@ -147,6 +152,30 @@ export default function AdminDashboard({ users, totalTopics }: Props) {
         </button>
       </div>
 
+      {/* Tabs */}
+      <div className="flex gap-1 mb-8 border-b border-[var(--border)]">
+        {(
+          [
+            { id: "progress", label: "Progress" },
+            { id: "feedback", label: `Feedback${feedback.length ? ` (${feedback.length})` : ""}` },
+          ] as { id: Tab; label: string }[]
+        ).map((t) => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            className={`px-4 py-2 text-sm -mb-px border-b-2 transition-colors ${
+              tab === t.id
+                ? "border-amber-500 text-amber-500 font-medium"
+                : "border-transparent text-[var(--fg-muted)] hover:text-[var(--fg)]"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "progress" ? (
+        <>
       {/* Stat cards */}
       <div className="grid grid-cols-3 gap-4 mb-8">
         {[
@@ -372,6 +401,10 @@ export default function AdminDashboard({ users, totalTopics }: Props) {
           UserProgress table · {totalTopics} topics
         </span>
       </div>
+        </>
+      ) : (
+        <FeedbackPanel feedback={feedback} fmtDate={fmtDate} />
+      )}
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { topics } from "@/workshop/topics";
 import { TopicSidebar } from "@/components/TopicSidebar";
 import { CodeRunner } from "@/components/CodeRunner";
 import { useProgress } from "@/components/useProgress";
+import { FeedbackWidget } from "@/components/FeedbackWidget";
 
 export default function Home() {
   const { ready, lastTopicId, completed, setLast, markComplete, reset } = useProgress();
@@ -48,6 +49,7 @@ export default function Home() {
           onNavigate={select}
         />
       </section>
+      <FeedbackWidget topicId={topic.id} topicTitle={topic.title} />
     </main>
   );
 }

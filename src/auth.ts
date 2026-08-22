@@ -15,7 +15,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // The middleware runs in the Edge Runtime and would crash on the static import.
       import("@/lib/tableStorage")
         .then(({ logLoginEvent }) => logLoginEvent(user))
-        .catch((err) => console.error("[activity-log] login event failed:", err))
+        .catch((err) => {
+          console.error("[activity-log] login event failed:", err)
+          // Same reason for the dynamic import: the telemetry SDK must not be
+          // pulled into the Edge middleware bundle either.
+          void import("@/lib/telemetry")
+            .then(({ trackException }) =>
+              trackException(err, { source: "auth.signIn", email: user.email ?? "unknown" }),
+            )
+            .catch(() => {})
+        })
     },
   },
 })

@@ -3,12 +3,56 @@ import { Worker } from "node:worker_threads";
 import { transform } from "esbuild";
 import { WORKER_SOURCE } from "./sandboxWorker";
 
+/**
+ * Diagnostics attached to an error event. Never shown to the participant — it
+ * exists so /api/run can report what actually broke to Application Insights.
+ */
+export type SandboxErrorDetail = {
+  phase: "compile" | "runtime" | "api" | "timeout" | "worker";
+  name?: string;
+  stack?: string;
+  /** HTTP status from Azure OpenAI. */
+  status?: number;
+  code?: string;
+  errType?: string;
+  /** The request id Azure support asks for. */
+  requestId?: string;
+  /** Worker exit code, when the worker died on its own. */
+  exitCode?: number;
+  /** "line:column" in the participant's code, for compile errors. */
+  location?: string;
+};
+
+/**
+ * One HTTP call the participant's code made to Azure AI Foundry. Reported by
+ * the worker, consumed by /api/run for telemetry — never sent to the browser.
+ */
+export type SandboxApiCall = {
+  type: "apiCall";
+  /** URL path only, e.g. "/openai/v1/responses" — never the full URL or key. */
+  path?: string;
+  method: string;
+  /** Model named in the request body, when there was one. */
+  model?: string;
+  status?: number;
+  durationMs: number;
+  success: boolean;
+  streaming?: boolean;
+  requestId?: string;
+  /** Transport-level failure message, when the request never got a response. */
+  error?: string;
+  inputTokens?: number;
+  outputTokens?: number;
+  totalTokens?: number;
+};
+
 export type SandboxEvent =
   | { type: "log"; line: string; stream?: "out" | "error" }
+  | SandboxApiCall
   | { type: "delta"; text: string }
   | { type: "image"; dataUrl: string }
   | { type: "result"; text: string; answer?: string }
-  | { type: "error"; message: string }
+  | { type: "error"; message: string; detail?: SandboxErrorDetail }
   | { type: "done" };
 
 export type FoundryCreds = {
@@ -45,7 +89,22 @@ export async function runSandbox(
     const out = await transform(wrapped, { loader: "ts", target: "es2022" });
     js = out.code;
   } catch (err) {
-    onEvent({ type: "error", message: `Compile error: ${(err as Error).message}` });
+    const e = err as Error & {
+      errors?: { text: string; location?: { line: number; column: number } }[];
+    };
+    const loc = e.errors?.[0]?.location;
+    onEvent({
+      type: "error",
+      message: `Compile error: ${e.message}`,
+      detail: {
+        phase: "compile",
+        name: e.name,
+        stack: e.stack,
+        // esbuild counts the async-IIFE wrapper line added above, so subtract
+        // one to get back to the line the participant actually edited.
+        location: loc ? `${loc.line - 1}:${loc.column}` : undefined,
+      },
+    });
     return;
   }
 
@@ -68,6 +127,7 @@ export async function runSandbox(
       onEvent({
         type: "error",
         message: `Execution timed out after ${TIMEOUT_MS / 1000}s and was terminated.`,
+        detail: { phase: "timeout" },
       });
       finish();
     }, TIMEOUT_MS);
@@ -77,9 +137,24 @@ export async function runSandbox(
       if (msg.type === "done" || msg.type === "error") finish();
     });
     worker.on("error", (err) => {
-      onEvent({ type: "error", message: err.message });
+      onEvent({
+        type: "error",
+        message: err.message,
+        detail: { phase: "worker", name: err.name, stack: err.stack },
+      });
       finish();
     });
-    worker.on("exit", () => finish());
+    worker.on("exit", (exitCode) => {
+      // On the happy path finish() already ran and terminated the worker, which
+      // itself produces a non-zero code — so only report an unsettled exit.
+      if (!settled && exitCode !== 0) {
+        onEvent({
+          type: "error",
+          message: `The sandbox process exited unexpectedly (code ${exitCode}).`,
+          detail: { phase: "worker", exitCode },
+        });
+      }
+      finish();
+    });
   });
 }

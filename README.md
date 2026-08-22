@@ -10,7 +10,7 @@ editable TypeScript code that you run in the browser and watch the output **stre
 - **Azure AI Foundry** (`openai` SDK, v1 API) — the LLM, behind a server-side proxy
 - **esbuild + node:vm in a worker_thread** — safely run the edited code server-side
 - **Microsoft Entra ID** (Auth.js v5) — authentication
-- **Azure Table Storage** — participant progress tracking
+- **Azure Table Storage** — participant progress tracking and feedback
 
 ## Security model
 
@@ -35,6 +35,11 @@ The edited code runs **on the server**, so the Azure key must never be reachable
    - `AUTH_MICROSOFT_ENTRA_ID_*` + `AUTH_SECRET` — Entra ID app registration (run `setup-entra-auth.ps1` to create it)
    - `AZURE_STORAGE_CONNECTION_STRING` — storage account for progress tracking
    - `ADMIN_EMAIL` — the email address that can access the `/admin` dashboard
+   - `APPLICATIONINSIGHTS_CONNECTION_STRING` — optional; when set, server-side failures
+     (sandbox runs, grading, progress writes) are reported to Application Insights,
+     along with every Azure AI Foundry call a participant's code makes — as a
+     dependency carrying the topic, model, duration, status, and token usage.
+     Leave it blank to disable telemetry.
 
 2. Install and run:
    ```bash
@@ -49,11 +54,21 @@ The edited code runs **on the server**, so the Azure key must never be reachable
 2. Read the description, then edit the code in the Monaco editor.
 3. Press **Run** — the output panel streams the result live.
 
+## Feedback
+
+A **Feedback** button sits in the bottom-right corner of every topic. Participants can optionally
+report a problem, suggest an improvement, ask a question, or leave praise. Whatever they send is
+tagged with the topic they were on — so a problem report points at the exact lesson that broke —
+and they can untick that to file it as general workshop feedback instead, or send anonymously
+(in which case no email or name is stored). Messages land in the `UserFeedback` table.
+
 ## Admin dashboard
 
 The `/admin` route shows a live participant progress dashboard — who has completed which topics,
-overall completion rate, and last activity. Only the account whose email matches `ADMIN_EMAIL` in
-`.env.local` can access it; everyone else is redirected to the home page.
+overall completion rate, and last activity. A second tab lists all submitted feedback, filterable
+by kind and topic, so you can see which topics are drawing the most problem reports. Only the
+account whose email matches `ADMIN_EMAIL` in `.env.local` can access it; everyone else is
+redirected to the home page.
 
 ## Course content
 
