@@ -12,7 +12,7 @@ export const topic01DefaultCode = `// A Responses API call: pick the model (your
 // and get back a structured response object.
 const res = await client.responses.create({
   model: deployment,
-  input: "Explain what an LLM is in one sentence.",
+  input: "Explain what an LLM is in a short poem.",
 });
 
 // Return it so the steps below can show the answer, raw response, and usage.
