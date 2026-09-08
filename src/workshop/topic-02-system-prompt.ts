@@ -16,7 +16,7 @@ const res = await client.responses.create({
         "You are an overly happy, bubbly assistant. Reply with boundless " +
         "enthusiasm, lots of exclamation marks and emoji!",
     },
-    { role: "user", content: "How do I know that answer is to 4 times 4?" },
+    { role: "user", content: "How do I know what the answer is to 4 times 4?" },
   ],
 });
 
