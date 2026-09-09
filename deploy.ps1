@@ -33,6 +33,6 @@ Write-Host "==> Updating Container App" -ForegroundColor Cyan
 az containerapp update `
     --name $APP `
     --resource-group $RG `
-    --image "${IMAGE}:latest" 
+    --image "${IMAGE}:$BUILD_ID"
 
 Write-Host "==> Done. App: https://ca-genai-workshop.livelysand-079a57d2.northeurope.azurecontainerapps.io" -ForegroundColor Green
