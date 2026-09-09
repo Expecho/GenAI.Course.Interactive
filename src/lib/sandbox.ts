@@ -64,9 +64,11 @@ export type FoundryCreds = {
   reasoningDeployment: string;
 };
 
-// 60s so slower calls (image generation, high-effort reasoning) can finish;
-// still bounded so a runaway edit can't hang the server indefinitely.
-const TIMEOUT_MS = 60_000;
+// 180s so slower calls can finish: image generation takes ~35s on an idle
+// resource and longer when a room full of participants runs at once, and
+// high-effort reasoning is slow too. Still bounded so a runaway edit
+// (e.g. `while (true) {}`) can't hang the server indefinitely.
+const TIMEOUT_MS = 180_000;
 
 /**
  * Transpiles the edited TypeScript to JS (esbuild), then runs it inside a

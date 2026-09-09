@@ -1034,6 +1034,10 @@ const topicDefinitions: Topic[] = [
       "",
       "Run it and watch an image appear from a sentence of description. Then edit the prompt and run",
       "again.",
+      "",
+      "⏳ **Give it a moment.** Image models are much slower than text models: a single picture",
+      "usually takes tens of seconds, and on a busy resource it can run to a few minutes. The **Run**",
+      "button stays busy the whole time — that is normal, so be patient and don't re-run it.",
     ].join("\n"),
     defaultCode: topic12DefaultCode,
     question: {
