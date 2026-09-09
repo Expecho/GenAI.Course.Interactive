@@ -494,6 +494,10 @@ const topicDefinitions: Topic[] = [
       "Some models are **multimodal** — they handle more than text. A vision-capable model can take",
       "an **image** alongside your words and reason about it. Here we send a photo the model has",
       "never been told about and ask it to describe what it sees.",
+      "",
+      "This is the photo the code below sends:",
+      "",
+      "![The photo sent to the model](https://www.gstatic.com/webp/gallery/1.jpg =300)",
     ].join("\n"),
     defaultCode: topic06DefaultCode,
     question: {

@@ -21,15 +21,19 @@ export function Markdown({ markdown }: { markdown: string }) {
 
   const html = blocks
     .map((lines) => {
-      // Block-level image: a single line of the form ![alt](url)
+      // Block-level image: a single line of the form ![alt](url), with an
+      // optional ` =300` before the closing paren to cap its width in pixels.
       if (lines.length === 1) {
-        const imgMatch = lines[0].match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
+        const imgMatch = lines[0].match(/^!\[([^\]]*)\]\(([^)\s]+)(?:\s+=(\d+))?\)$/);
         if (imgMatch && /^(https?:\/\/|\/)/.test(imgMatch[2])) {
           const alt = imgMatch[1]
             .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
             .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
           const src = imgMatch[2].replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-          return `<div class="my-2"><img src="${src}" alt="${alt}" class="max-w-full rounded border border-[var(--border)]" /></div>`;
+          // Inline style, not a Tailwind class: the width is author-supplied, so
+          // no arbitrary-value class exists at build time for Tailwind to emit.
+          const style = imgMatch[3] ? ` style="max-width:${Number(imgMatch[3])}px"` : "";
+          return `<div class="my-2"><img src="${src}" alt="${alt}"${style} class="max-w-full rounded border border-[var(--border)]" /></div>`;
         }
       }
       if (lines[0].startsWith("## ")) {
