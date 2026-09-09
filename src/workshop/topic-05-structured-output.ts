@@ -8,7 +8,7 @@
 export const topic05DefaultCode = `// We want DATA, not prose. Let's just ask for JSON and try to use it.
 const res = await client.responses.create({
   model: deployment,
-  input: 'I need the name and age from "Sam is 30 years old." Show me the JSON to send the a backend api.',
+  input: 'I need the name and age from "Sam is 30 years old." Show me the JSON to send to a backend API.',
 });
 
 console.log("Raw output:\\n" + res.output_text);
@@ -28,7 +28,7 @@ export const topic05SchemaCode = `// Attach a JSON schema. With strict:true the 
 // in exactly this shape — the right fields and types, nothing extra.
 const res = await client.responses.create({
   model: deployment,
-  input: 'I need the name and age from "Sam is 30 years old." Show me the JSON to send the a backend api.',
+  input: 'I need the name and age from "Sam is 30 years old." Show me the JSON to send to a backend API.',
   text: {
     format: {
       type: "json_schema",
