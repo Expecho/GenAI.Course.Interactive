@@ -1,12 +1,15 @@
 import "server-only";
 import { TableClient, odata, RestError } from "@azure/data-tables";
 import { trackException } from "./telemetry";
+import { courseTopicIds } from "@/workshop/topics";
 
-export const TOTAL_TOPICS = 17;
+/** Topics needed to complete the course. UserProgress also holds rows for the intro and recap, which don't count. */
+export const TOTAL_TOPICS = courseTopicIds.size;
 
 const USER_ACTIVITY_TABLE = "UserActivity";
 const USER_PROGRESS_TABLE = "UserProgress";
 const USER_FEEDBACK_TABLE = "UserFeedback";
+const COURSE_RATING_TABLE = "CourseRating";
 
 /** Lazy singleton map: tableName -> TableClient */
 const _clients: Map<string, TableClient> = new Map();
@@ -32,7 +35,7 @@ function getClient(tableName: string): TableClient {
   const connStr = process.env.AZURE_STORAGE_CONNECTION_STRING;
   if (!connStr) return; // skip in build/test environments
 
-  for (const tableName of [USER_ACTIVITY_TABLE, USER_PROGRESS_TABLE, USER_FEEDBACK_TABLE]) {
+  for (const tableName of [USER_ACTIVITY_TABLE, USER_PROGRESS_TABLE, USER_FEEDBACK_TABLE, COURSE_RATING_TABLE]) {
     try {
       await getClient(tableName).createTable();
     } catch (err) {
@@ -179,11 +182,12 @@ export async function getAllUserProgress(): Promise<UserProgressSummary[]> {
     const email = entity.partitionKey;
     const existing = map.get(email);
     const lastActivity = entity.completedAt ?? null;
+    const counts = courseTopicIds.has(entity.rowKey) ? 1 : 0;
 
     if (!existing) {
-      map.set(email, { email, name: entity.userName ?? "", topics: 1, lastActivity });
+      map.set(email, { email, name: entity.userName ?? "", topics: counts, lastActivity });
     } else {
-      existing.topics++;
+      existing.topics += counts;
       if (!existing.name && entity.userName) existing.name = entity.userName;
       if (lastActivity && (!existing.lastActivity || lastActivity > existing.lastActivity)) {
         existing.lastActivity = lastActivity;
@@ -195,7 +199,7 @@ export async function getAllUserProgress(): Promise<UserProgressSummary[]> {
 }
 
 /**
- * Returns the number of topics this user has completed.
+ * Returns the number of course topics (see TOTAL_TOPICS) this user has completed.
  */
 export async function getCompletedTopicCount(email: string): Promise<number> {
   const progressClient = getClient(USER_PROGRESS_TABLE);
@@ -203,8 +207,8 @@ export async function getCompletedTopicCount(email: string): Promise<number> {
   const entities = progressClient.listEntities({ queryOptions: { filter } });
 
   let count = 0;
-  for await (const _entity of entities) {
-    count++;
+  for await (const entity of entities) {
+    if (entity.rowKey && courseTopicIds.has(entity.rowKey)) count++;
   }
   return count;
 }
@@ -323,5 +327,92 @@ export async function getAllFeedback(): Promise<FeedbackEntry[]> {
   }
 
   out.sort((a, b) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0));
+  return out;
+}
+
+/** Course rating: 0 to 5 stars. */
+export const MAX_RATING = 5;
+
+export interface CourseRating {
+  email: string;
+  userName: string;
+  rating: number;
+  ratedAt: string;
+}
+
+/**
+ * All ratings live in one partition, keyed by email, so each participant has a
+ * single rating they can change, and the admin view reads it in one query.
+ */
+const RATING_PARTITION = "course";
+
+/** Stores (or replaces) this participant's rating of the course. */
+export async function saveCourseRating(entry: {
+  email: string;
+  userName: string;
+  rating: number;
+}): Promise<void> {
+  const client = getClient(COURSE_RATING_TABLE);
+  const row = {
+    partitionKey: RATING_PARTITION,
+    rowKey: entry.email.toLowerCase(),
+    rating: entry.rating,
+    userName: entry.userName,
+    ratedAt: new Date().toISOString(),
+  };
+  try {
+    await client.upsertEntity(row, "Replace");
+  } catch (err) {
+    // Same as logFeedback: the table may not exist yet if this arrives before
+    // the fire-and-forget createTable at module load has finished.
+    if (err instanceof RestError && err.statusCode === 404) {
+      await client.createTable();
+      await client.upsertEntity(row, "Replace");
+    } else {
+      throw err;
+    }
+  }
+}
+
+/** Returns this participant's rating, or null if they haven't rated the course. */
+export async function getCourseRating(email: string): Promise<number | null> {
+  try {
+    const e = await getClient(COURSE_RATING_TABLE).getEntity<{ rating?: number }>(
+      RATING_PARTITION,
+      email.toLowerCase(),
+    );
+    return typeof e.rating === "number" ? e.rating : null;
+  } catch (err) {
+    if (err instanceof RestError && err.statusCode === 404) return null;
+    throw err;
+  }
+}
+
+/** Returns all course ratings, newest first. */
+export async function getAllCourseRatings(): Promise<CourseRating[]> {
+  const entities = getClient(COURSE_RATING_TABLE).listEntities<{
+    rowKey: string;
+    rating?: number;
+    userName?: string;
+    ratedAt?: string;
+  }>({ queryOptions: { filter: odata`PartitionKey eq ${RATING_PARTITION}` } });
+
+  const out: CourseRating[] = [];
+  try {
+    for await (const e of entities) {
+      if (!Number.isInteger(e.rating) || e.rating! < 0 || e.rating! > MAX_RATING) continue;
+      out.push({
+        email: e.rowKey,
+        userName: e.userName ?? "",
+        rating: e.rating!,
+        ratedAt: e.ratedAt ?? "",
+      });
+    }
+  } catch (err) {
+    // No ratings yet on a fresh deployment: the table doesn't exist.
+    if (!(err instanceof RestError && err.statusCode === 404)) throw err;
+  }
+
+  out.sort((a, b) => (a.ratedAt < b.ratedAt ? 1 : a.ratedAt > b.ratedAt ? -1 : 0));
   return out;
 }

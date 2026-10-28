@@ -29,6 +29,7 @@ export type Topic = {
     code: string; // a second editable/runnable code block, after the checkpoint
     explanation: string; // takeaway markdown revealed after running the fixed code
   };
+  courseRating?: boolean; // end the page with the 0–5 star course rating (the recap)
 };
 
 /**
@@ -1768,6 +1769,7 @@ const topicDefinitions: Topic[] = [
   {
     id: "recap",
     title: "Recap",
+    courseRating: true,
     description: [
       "## 🗺️ The bigger picture",
       "",
@@ -1851,3 +1853,12 @@ export const topics: Topic[] = TOPIC_ORDER.map((id) => {
   if (!topic) throw new Error(`TOPIC_ORDER references unknown topic id: ${id}`);
   return topic;
 });
+
+/**
+ * Ids of the numbered, hands-on topics — the ones that count towards course
+ * progress. The text-only intro and recap are excluded: they're marked complete
+ * just by opening them.
+ */
+export const courseTopicIds: ReadonlySet<string> = new Set(
+  topics.filter((t) => t.defaultCode !== undefined).map((t) => t.id),
+);

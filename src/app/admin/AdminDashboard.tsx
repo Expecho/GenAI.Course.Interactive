@@ -2,8 +2,9 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import type { FeedbackEntry } from "@/lib/tableStorage";
+import type { CourseRating, FeedbackEntry } from "@/lib/tableStorage";
 import FeedbackPanel from "./FeedbackPanel";
+import RatingsPanel from "./RatingsPanel";
 
 interface User {
   email: string;
@@ -16,13 +17,14 @@ interface Props {
   users: User[];
   totalTopics: number;
   feedback: FeedbackEntry[];
+  ratings: CourseRating[];
 }
 
 type SortKey = "name" | "email" | "topics" | "status" | "date";
 type FilterKey = "all" | "progress" | "complete";
-type Tab = "progress" | "feedback";
+type Tab = "progress" | "feedback" | "ratings";
 
-export default function AdminDashboard({ users, totalTopics, feedback }: Props) {
+export default function AdminDashboard({ users, totalTopics, feedback, ratings }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [tab, setTab] = useState<Tab>("progress");
@@ -158,6 +160,7 @@ export default function AdminDashboard({ users, totalTopics, feedback }: Props) 
           [
             { id: "progress", label: "Progress" },
             { id: "feedback", label: `Feedback${feedback.length ? ` (${feedback.length})` : ""}` },
+            { id: "ratings", label: `Ratings${ratings.length ? ` (${ratings.length})` : ""}` },
           ] as { id: Tab; label: string }[]
         ).map((t) => (
           <button
@@ -402,8 +405,10 @@ export default function AdminDashboard({ users, totalTopics, feedback }: Props) 
         </span>
       </div>
         </>
-      ) : (
+      ) : tab === "feedback" ? (
         <FeedbackPanel feedback={feedback} fmtDate={fmtDate} />
+      ) : (
+        <RatingsPanel ratings={ratings} fmtDate={fmtDate} />
       )}
     </div>
   );

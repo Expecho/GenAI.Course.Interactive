@@ -5,6 +5,7 @@ import Editor from "@monaco-editor/react";
 import type { Topic } from "@/workshop/topics";
 import { Markdown } from "./Markdown";
 import { QuestionPanel } from "./QuestionPanel";
+import { CourseRating } from "./CourseRating";
 import { useCodeRun, type CodeRun } from "./useCodeRun";
 import { useTheme } from "./ThemeProvider";
 
@@ -42,6 +43,7 @@ export function CodeRunner({
     return (
       <div className="mx-auto max-w-3xl px-6 py-10">
         <Markdown markdown={topic.description} />
+        {topic.courseRating && <CourseRating />}
         <TopicNav prev={prev} next={next} onNavigate={onNavigate} />
       </div>
     );
