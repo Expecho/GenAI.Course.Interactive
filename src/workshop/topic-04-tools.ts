@@ -29,11 +29,11 @@ const input = [{ role: "user", content: "What is the current date and time right
 let res = await client.responses.create({ model: deployment, input, tools });
 
 // 2) Run each tool the model requested, and hand the result back.
+input.push(...res.output); // the model's turn, including its function call
 for (const item of res.output) {
   if (item.type === "function_call" && item.name === "get_current_datetime") {
     const now = new Date().toISOString();
     console.log("Model called get_current_datetime → " + now);
-    input.push(item); // the model's function call
     input.push({ type: "function_call_output", call_id: item.call_id, output: now });
   }
 }

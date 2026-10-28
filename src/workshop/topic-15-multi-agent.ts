@@ -34,12 +34,12 @@ while (rounds++ < 6) {
   res = await client.responses.create({ model: deployment, input, tools });
   const calls = res.output.filter((o) => o.type === "function_call");
   if (calls.length === 0) break;
+  input.push(...res.output); // the model's turn: its reasoning + function calls
   for (const call of calls) {
     const args = JSON.parse(call.arguments);
     // Delegating to a tool here means running another agent.
     const out = call.name === "researcher" ? await researcher(args.topic) : await translator(args.text);
     console.log("orchestrator → " + call.name + "()");
-    input.push(call);
     input.push({ type: "function_call_output", call_id: call.call_id, output: out });
   }
 }

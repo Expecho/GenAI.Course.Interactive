@@ -24,12 +24,12 @@ while (rounds++ < 6) {
   const calls = res.output.filter((o) => o.type === "function_call");
   if (calls.length === 0) break; // no more tools requested → the model is done
 
+  input.push(...res.output); // the model's turn: its reasoning + function calls
   for (const call of calls) {
     let output;
     if (call.name === "get_current_datetime") output = new Date().toISOString();
     else if (call.name === "multiply") { const { a, b } = JSON.parse(call.arguments); output = String(a * b); }
     console.log("→ called " + call.name + "(" + call.arguments + ") = " + output);
-    input.push(call);
     input.push({ type: "function_call_output", call_id: call.call_id, output });
   }
 }
