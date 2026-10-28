@@ -7,6 +7,7 @@ export const TOTAL_TOPICS = 17;
 const USER_ACTIVITY_TABLE = "UserActivity";
 const USER_PROGRESS_TABLE = "UserProgress";
 const USER_FEEDBACK_TABLE = "UserFeedback";
+const REMINDER_LOG_TABLE = "ReminderLog";
 
 /** Lazy singleton map: tableName -> TableClient */
 const _clients: Map<string, TableClient> = new Map();
@@ -32,7 +33,7 @@ function getClient(tableName: string): TableClient {
   const connStr = process.env.AZURE_STORAGE_CONNECTION_STRING;
   if (!connStr) return; // skip in build/test environments
 
-  for (const tableName of [USER_ACTIVITY_TABLE, USER_PROGRESS_TABLE, USER_FEEDBACK_TABLE]) {
+  for (const tableName of [USER_ACTIVITY_TABLE, USER_PROGRESS_TABLE, USER_FEEDBACK_TABLE, REMINDER_LOG_TABLE]) {
     try {
       await getClient(tableName).createTable();
     } catch (err) {
@@ -159,6 +160,8 @@ export interface UserProgressSummary {
   name: string;
   topics: number;
   lastActivity: string | null;
+  /** Ids of the topics this user has completed. */
+  topicIds: string[];
 }
 
 /**
@@ -181,9 +184,16 @@ export async function getAllUserProgress(): Promise<UserProgressSummary[]> {
     const lastActivity = entity.completedAt ?? null;
 
     if (!existing) {
-      map.set(email, { email, name: entity.userName ?? "", topics: 1, lastActivity });
+      map.set(email, {
+        email,
+        name: entity.userName ?? "",
+        topics: 1,
+        lastActivity,
+        topicIds: [entity.rowKey],
+      });
     } else {
       existing.topics++;
+      existing.topicIds.push(entity.rowKey);
       if (!existing.name && entity.userName) existing.name = entity.userName;
       if (lastActivity && (!existing.lastActivity || lastActivity > existing.lastActivity)) {
         existing.lastActivity = lastActivity;
@@ -324,4 +334,64 @@ export async function getAllFeedback(): Promise<FeedbackEntry[]> {
 
   out.sort((a, b) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0));
   return out;
+}
+
+/** Per-user state for the "come back and finish the course" reminder emails. */
+export interface ReminderState {
+  email: string;
+  lastSentAt: string | null;
+  sentCount: number;
+  optedOut: boolean;
+}
+
+const REMINDER_ROW = "state";
+
+/** Returns the reminder state of every user that has one, keyed by lowercase email. */
+export async function getAllReminderStates(): Promise<Map<string, ReminderState>> {
+  const client = getClient(REMINDER_LOG_TABLE);
+  const entities = client.listEntities<{
+    partitionKey: string;
+    rowKey: string;
+    lastSentAt?: string;
+    sentCount?: number;
+    optedOut?: boolean;
+  }>();
+
+  const out = new Map<string, ReminderState>();
+  for await (const e of entities) {
+    if (e.rowKey !== REMINDER_ROW) continue;
+    out.set(e.partitionKey, {
+      email: e.partitionKey,
+      lastSentAt: e.lastSentAt ?? null,
+      sentCount: e.sentCount ?? 0,
+      optedOut: e.optedOut ?? false,
+    });
+  }
+  return out;
+}
+
+/** Records that a reminder was just sent to this user. */
+export async function recordReminderSent(email: string, sentCount: number): Promise<void> {
+  await getClient(REMINDER_LOG_TABLE).upsertEntity(
+    {
+      partitionKey: email.toLowerCase(),
+      rowKey: REMINDER_ROW,
+      lastSentAt: new Date().toISOString(),
+      sentCount,
+    },
+    "Merge",
+  );
+}
+
+/** Opts a user out of (or back into) reminder emails. */
+export async function setReminderOptOut(email: string, optedOut: boolean): Promise<void> {
+  await getClient(REMINDER_LOG_TABLE).upsertEntity(
+    {
+      partitionKey: email.toLowerCase(),
+      rowKey: REMINDER_ROW,
+      optedOut,
+      optedOutAt: optedOut ? new Date().toISOString() : "",
+    },
+    "Merge",
+  );
 }

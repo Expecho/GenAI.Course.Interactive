@@ -11,12 +11,19 @@ export default function Home() {
   const { ready, lastTopicId, completed, setLast, markComplete, reset } = useProgress();
   const [activeId, setActiveId] = useState(topics[0].id);
 
-  // Once stored progress has loaded, resume the last topic (if it still exists).
+  // Once stored progress has loaded, open the topic named in `?topic=` (the
+  // link in reminder emails), else resume the last topic (if it still exists).
   useEffect(() => {
-    if (ready && lastTopicId && topics.some((t) => t.id === lastTopicId)) {
+    if (!ready) return;
+    const fromUrl = new URLSearchParams(window.location.search).get("topic");
+    if (fromUrl && topics.some((t) => t.id === fromUrl)) {
+      setActiveId(fromUrl);
+      setLast(fromUrl);
+      window.history.replaceState(null, "", window.location.pathname);
+    } else if (lastTopicId && topics.some((t) => t.id === lastTopicId)) {
       setActiveId(lastTopicId);
     }
-  }, [ready, lastTopicId]);
+  }, [ready, lastTopicId, setLast]);
 
   function select(id: string) {
     setActiveId(id);

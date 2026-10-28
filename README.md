@@ -70,6 +70,25 @@ by kind and topic, so you can see which topics are drawing the most problem repo
 account whose email matches `ADMIN_EMAIL` in `.env.local` can access it; everyone else is
 redirected to the home page.
 
+## Reminder emails
+
+People who have completed at least one topic, but not the whole course, get an email every 28 days
+(`REMINDER_INTERVAL_DAYS`) until they finish. The clock runs from the later of their last completed
+topic and their last reminder, so anyone still actively working is never nagged. The text-only
+introduction and recap don't count as "started", because opening them is enough to complete them.
+The email says how far they are and links straight to their next topic (`/?topic=<id>`).
+Each email has a signed unsubscribe link, so it works without signing in, and people can turn
+reminders back on from the same page. Sent reminders and opt-outs are stored in the `ReminderLog` table.
+
+Emails go out through Microsoft Graph (`sendMail`) from `REMINDER_SENDER_MAILBOX`, using the
+workshop's Entra app with the `Mail.Send` application permission. A scheduled Container Apps Job
+calls `POST /api/reminders/run` every weekday, authenticated with `REMINDER_CRON_SECRET`. Each run
+sends at most `REMINDER_MAX_PER_RUN` emails (default 50); anyone left over is picked up on the next run.
+
+Run `setup-reminders.ps1` once to grant the permission, configure the app and create the job.
+Sending stays off until `REMINDERS_ENABLED=true`. Until then, the endpoint (or `?dryRun=1` at any
+time) only returns who *would* be reminded.
+
 ## Course content
 
 The workshop starts with a short introduction, walks through 17 hands-on topics, and closes with

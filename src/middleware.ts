@@ -4,7 +4,8 @@ import { NextResponse } from "next/server"
 export default auth((req) => {
   if (!req.auth) {
     const loginUrl = new URL("/api/login", req.nextUrl.origin)
-    loginUrl.searchParams.set("callbackUrl", req.nextUrl.pathname)
+    // Keep the query string so deep links (e.g. ?topic=) survive sign-in.
+    loginUrl.searchParams.set("callbackUrl", req.nextUrl.pathname + req.nextUrl.search)
     return NextResponse.redirect(loginUrl)
   }
 })
