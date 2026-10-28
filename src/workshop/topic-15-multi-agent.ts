@@ -1,13 +1,21 @@
 /**
  * Topic 15 — "Multi-agent systems". A single code block: an orchestrator agent
- * whose tools are themselves specialist sub-agents (agents-as-tools). The
+ * whose tools are themselves specialist sub-agents (agents-as-tools), run as a
+ * three-step pipeline: research → summarize → translate. The
  * explanation covers multi-agent patterns, MCP, and the A2A protocol.
  */
 export const topic15DefaultCode = `// Each specialist is its own agent: a focused LLM call with its own instructions.
 async function researcher(topic) {
   const r = await client.responses.create({ model: deployment, input: [
-    { role: "system", content: "You are a concise researcher. Give exactly two key facts, one short sentence each." },
+    { role: "system", content: "You are a researcher. Give five key facts as a bulleted list, one sentence each." },
     { role: "user", content: "Topic: " + topic },
+  ]});
+  return r.output_text;
+}
+async function summarizer(text) {
+  const r = await client.responses.create({ model: deployment, input: [
+    { role: "system", content: "Summarize the user's text in at most two short sentences. Output only the summary." },
+    { role: "user", content: text },
   ]});
   return r.output_text;
 }
@@ -23,11 +31,13 @@ async function translator(text) {
 const tools = [
   { type: "function", name: "researcher", description: "Researches a topic and returns key facts.",
     parameters: { type: "object", properties: { topic: { type: "string" } }, required: ["topic"], additionalProperties: false } },
+  { type: "function", name: "summarizer", description: "Condenses text into a short summary of at most two sentences.",
+    parameters: { type: "object", properties: { text: { type: "string" } }, required: ["text"], additionalProperties: false } },
   { type: "function", name: "translator", description: "Translates text to French.",
     parameters: { type: "object", properties: { text: { type: "string" } }, required: ["text"], additionalProperties: false } },
 ];
 
-const input = [{ role: "user", content: "Research the planet Mars, then translate the findings into French." }];
+const input = [{ role: "user", content: "Research the planet Mars, summarize the findings, then translate the summary into French." }];
 
 let res, rounds = 0;
 while (rounds++ < 6) {
@@ -38,11 +48,14 @@ while (rounds++ < 6) {
   for (const call of calls) {
     const args = JSON.parse(call.arguments);
     // Delegating to a tool here means running another agent.
-    const out = call.name === "researcher" ? await researcher(args.topic) : await translator(args.text);
+    const out =
+      call.name === "researcher" ? await researcher(args.topic)
+      : call.name === "summarizer" ? await summarizer(args.text)
+      : await translator(args.text);
     console.log("orchestrator → " + call.name + "()");
     input.push({ type: "function_call_output", call_id: call.call_id, output: out });
   }
 }
 
-return res; // the orchestrator coordinated two specialist agents to produce this
+return res; // the orchestrator coordinated three specialist agents to produce this
 `;
