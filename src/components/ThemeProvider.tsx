@@ -5,7 +5,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 type Theme = "light" | "dark";
 
 const ThemeContext = createContext<{ theme: Theme; toggle: () => void }>({
-  theme: "dark",
+  theme: "light",
   toggle: () => {},
 });
 
@@ -18,7 +18,7 @@ export function useTheme() {
  * persists changes to localStorage, and keeps the `dark` class in sync.
  */
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>("dark");
+  const [theme, setTheme] = useState<Theme>("light");
 
   // Adopt whatever the inline script already applied (avoids a flash/mismatch).
   useEffect(() => {
@@ -41,14 +41,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   return <ThemeContext.Provider value={{ theme, toggle }}>{children}</ThemeContext.Provider>;
 }
 
-/** The no-FOUC snippet: applies the saved (or default-dark) theme before paint. */
+/** The no-FOUC snippet: applies the saved (or default-light) theme before paint. */
 export const themeInitScript = `
 (function () {
   try {
     var t = localStorage.getItem("theme");
-    if (t !== "light") document.documentElement.classList.add("dark");
+    if (t === "dark") document.documentElement.classList.add("dark");
   } catch (e) {
-    document.documentElement.classList.add("dark");
+    /* ignore storage errors */
   }
 })();
 `;
