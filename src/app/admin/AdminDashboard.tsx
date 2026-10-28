@@ -114,6 +114,36 @@ export default function AdminDashboard({ users, totalTopics, feedback, ratings }
     }
   }
 
+  /** Downloads the rows currently shown (search, filter and sort applied) as CSV. */
+  function downloadCsv() {
+    const cell = (value: string | number) => {
+      let s = String(value);
+      // Stop spreadsheet apps from evaluating a name like "=HYPERLINK(...)" as a formula.
+      if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+      return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const lines = [
+      ["Name", "Email", "Progress (%)", "Topics completed", "Status", "Last activity"],
+      ...rows.map((u) => [
+        u.name || u.email.split("@")[0],
+        u.email,
+        Math.min(Math.round((u.topics / totalTopics) * 100), 100),
+        `${u.topics}/${totalTopics}`,
+        u.topics >= totalTopics ? "Completed" : "In progress",
+        u.lastActivity ?? "",
+      ]),
+    ].map((line) => line.map(cell).join(","));
+
+    // The BOM makes Excel read the file as UTF-8, so accented names survive.
+    const blob = new Blob([String.fromCharCode(0xfeff) + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `workshop-progress-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   const thClass =
     "px-4 py-3 text-left text-xs uppercase tracking-wider text-[var(--fg-muted)] cursor-pointer hover:text-[var(--fg)] select-none whitespace-nowrap transition-colors";
 
@@ -263,6 +293,28 @@ export default function AdminDashboard({ users, totalTopics, feedback, ratings }
             </button>
           ))}
         </div>
+        <button
+          onClick={downloadCsv}
+          disabled={rows.length === 0}
+          title="Download the participants shown below as a CSV file"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-[var(--border)] rounded text-[var(--fg-muted)] hover:text-[var(--fg)] hover:border-amber-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M12 3v12" />
+            <path d="m7 10 5 5 5-5" />
+            <path d="M5 21h14" />
+          </svg>
+          CSV
+        </button>
       </div>
 
       {/* Table */}
