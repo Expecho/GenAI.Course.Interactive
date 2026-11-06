@@ -4,8 +4,16 @@ import { ThemeProvider, themeInitScript } from "@/components/ThemeProvider";
 import { auth, signOut } from "@/auth";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.SITE_URL ?? "https://aicourse.ibisnext.nl"),
   title: "Generative AI Workshop",
   description: "Hands-on, web-based Generative AI workshop — edit code and watch it run live.",
+  openGraph: {
+    type: "website",
+    siteName: "Generative AI Workshop",
+    title: "Generative AI Workshop",
+    description: "Hands-on, web-based Generative AI workshop — edit code and watch it run live.",
+  },
+  twitter: { card: "summary_large_image" },
 };
 
 export default async function RootLayout({
